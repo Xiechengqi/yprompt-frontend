@@ -1,5 +1,10 @@
 <template>
   <div class="login-container">
+    <!-- Git Commit 显示在右上角 -->
+    <div class="absolute top-2 right-2 z-50">
+      <GitCommit />
+    </div>
+    
     <div class="login-card">
       <!-- Logo和标题 -->
       <div class="login-header">
@@ -117,6 +122,7 @@ import { ref, onMounted, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/authStore'
 import { Eye, EyeOff, Check, AlertCircle, Loader2 } from 'lucide-vue-next'
+import GitCommit from '@/components/GitCommit.vue'
 
 const router = useRouter()
 const authStore = useAuthStore()
