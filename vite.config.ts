@@ -1,10 +1,33 @@
-import { defineConfig } from 'vite'
+import { defineConfig, Plugin } from 'vite'
 import vue from '@vitejs/plugin-vue'
 import { resolve } from 'path'
 import fs from 'fs'
+import { execSync } from 'child_process'
+
+// 创建注入 git commit 信息的插件
+function gitCommitPlugin(): Plugin {
+  return {
+    name: 'git-commit-plugin',
+    config(config, { mode }) {
+      const commitHash = getGitCommitHash()
+      const commitDate = getGitCommitDate()
+      
+      // 通过 define 注入到代码中
+      return {
+        define: {
+          'import.meta.env.VITE_GIT_COMMIT_HASH': JSON.stringify(commitHash),
+          'import.meta.env.VITE_GIT_COMMIT_DATE': JSON.stringify(commitDate)
+        }
+      }
+    }
+  }
+}
 
 export default defineConfig({
-  plugins: [vue()],
+  plugins: [
+    vue(),
+    gitCommitPlugin()
+  ],
   resolve: {
     alias: {
       '@': resolve(__dirname, 'src'),
@@ -42,4 +65,36 @@ function getBuiltinProviders() {
   
   // 如果没有配置文件或读取失败，返回空数组
   return []
+}
+
+// 获取 git commit hash（缩写，7位）
+function getGitCommitHash(): string {
+  try {
+    // 获取当前 commit hash 的前7位
+    const hash = execSync('git rev-parse --short HEAD', { 
+      encoding: 'utf-8',
+      cwd: __dirname,
+      stdio: ['ignore', 'pipe', 'ignore']
+    }).trim()
+    return hash || ''
+  } catch (error) {
+    console.warn('⚠️ 获取 git commit hash 失败:', error instanceof Error ? error.message : String(error))
+    return ''
+  }
+}
+
+// 获取 git commit 日期
+function getGitCommitDate(): string {
+  try {
+    // 获取当前 commit 的日期（ISO 8601 格式）
+    const date = execSync('git log -1 --format=%ci', { 
+      encoding: 'utf-8',
+      cwd: __dirname,
+      stdio: ['ignore', 'pipe', 'ignore']
+    }).trim()
+    return date || ''
+  } catch (error) {
+    console.warn('⚠️ 获取 git commit date 失败:', error instanceof Error ? error.message : String(error))
+    return ''
+  }
 }

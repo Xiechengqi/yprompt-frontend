@@ -126,10 +126,10 @@ const authConfig = ref({
   local_auth_enabled: true
 })
 
-// 表单数据
+// 表单数据（从环境变量读取用户名）
 const loginForm = ref({
-  username: 'admin',
-  password: '123123'
+  username: import.meta.env.VITE_LOGIN_USERNAME || '',
+  password: ''
 })
 
 // 状态
@@ -155,13 +155,8 @@ const validateUsername = (username: string): string | null => {
   return null
 }
 
-const validatePassword = (password: string, isRegister = false): string | null => {
+const validatePassword = (password: string): string | null => {
   if (!password) return '请输入密码'
-  if (isRegister) {
-    if (password.length < 8) return '密码至少8个字符'
-    if (!/[a-zA-Z]/.test(password)) return '密码必须包含字母'
-    if (!/[0-9]/.test(password)) return '密码必须包含数字'
-  }
   return null
 }
 
@@ -195,6 +190,10 @@ const fetchAuthConfig = async () => {
     const config = await authStore.getAuthConfig()
     if (config) {
       authConfig.value = config
+      // 如果环境变量没有设置用户名，使用后端返回的用户名
+      if (!loginForm.value.username && config.login_username) {
+        loginForm.value.username = config.login_username
+      }
     }
   } catch (error) {
     console.error('获取认证配置失败:', error)
@@ -222,12 +221,12 @@ const handleLocalLogin = async () => {
   isSubmitting.value = true
 
   try {
-    const success = await authStore.loginWithPassword(
+    const result = await authStore.loginWithPassword(
       loginForm.value.username.trim(),
       loginForm.value.password
     )
 
-    if (success) {
+    if (result.success) {
       // 保存记住我设置
       saveRememberedUsername()
       // 登录成功，跳转到原始目标路径或主页
@@ -238,10 +237,11 @@ const handleLocalLogin = async () => {
         router.push('/')
       }
     } else {
-      errorMessage.value = '用户名或密码错误'
+      // 显示详细的错误信息
+      errorMessage.value = result.message || '用户名或密码错误'
     }
   } catch (error) {
-    errorMessage.value = '登录失败，请稍后重试'
+    errorMessage.value = error instanceof Error ? error.message : '登录失败，请稍后重试'
     console.error('登录失败:', error)
   } finally {
     isSubmitting.value = false
@@ -387,8 +387,7 @@ onMounted(() => {
   margin-bottom: 20px;
 }
 
-.login-form,
-.register-form {
+.login-form {
   margin-top: 20px;
 }
 
@@ -575,25 +574,6 @@ onMounted(() => {
   border: 1px solid #fc8181;
 }
 
-.register-link {
-  text-align: center;
-  margin-top: 20px;
-  font-size: 14px;
-  color: #718096;
-}
-
-.register-btn {
-  color: #667eea;
-  text-decoration: none;
-  font-weight: 500;
-  cursor: pointer;
-  transition: color 0.2s;
-}
-
-.register-btn:hover {
-  color: #5a67d8;
-  text-decoration: underline;
-}
 
 /* 模态框样式 */
 .modal-overlay {

@@ -67,16 +67,36 @@ export const useAuthStore = defineStore('auth', () => {
   /**
    * 本地用户名密码登录
    */
-  const loginWithPassword = async (username: string, password: string): Promise<boolean> => {
+  const loginWithPassword = async (username: string, password: string): Promise<{ success: boolean; message?: string }> => {
     isLoading.value = true
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL || ''}/api/auth/local/login`, {
+      const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || ''
+      const url = `${apiBaseUrl}/api/auth/local/login`
+      
+      const response = await fetch(url, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({ username, password }),
       })
+      
+      // 检查响应状态
+      if (!response.ok) {
+        // 尝试解析错误响应
+        try {
+          const errorResult = await response.json()
+          return {
+            success: false,
+            message: errorResult.message || `请求失败: ${response.status} ${response.statusText}`
+          }
+        } catch (parseError) {
+          return {
+            success: false,
+            message: `网络错误: ${response.status} ${response.statusText}`
+          }
+        }
+      }
       
       const result = await response.json()
       
@@ -92,12 +112,26 @@ export const useAuthStore = defineStore('auth', () => {
           console.error('登录后加载云端配置失败:', error)
         }
         
-        return true
+        return { success: true }
       } else {
-        return false
+        return {
+          success: false,
+          message: result.message || '登录失败，请检查用户名和密码'
+        }
       }
     } catch (error) {
-      return false
+      console.error('登录请求失败:', error)
+      // 网络错误或 CORS 错误
+      if (error instanceof TypeError && error.message.includes('fetch')) {
+        return {
+          success: false,
+          message: '无法连接到服务器，请检查网络连接和 API 地址配置'
+        }
+      }
+      return {
+        success: false,
+        message: error instanceof Error ? error.message : '登录失败，请稍后重试'
+      }
     } finally {
       isLoading.value = false
     }
@@ -108,6 +142,7 @@ export const useAuthStore = defineStore('auth', () => {
    */
   const getAuthConfig = async (): Promise<{
     local_auth_enabled: boolean
+    login_username?: string
   } | null> => {
     try {
       const response = await fetch(`${import.meta.env.VITE_API_BASE_URL || ''}/api/auth/config`)
