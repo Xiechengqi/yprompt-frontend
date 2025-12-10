@@ -19,6 +19,8 @@ jobs:
 
       - name: Build
         run: |
+          git rev-parse --short HEAD
+          git log -1 --format=%ci
           npm install
           npm run build
           echo 'prompt-ui.xiechengqi.top' > dist/CNAME
