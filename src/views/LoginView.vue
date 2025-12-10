@@ -234,8 +234,8 @@ const authConfig = ref({
 
 // 表单数据
 const loginForm = ref({
-  username: '',
-  password: ''
+  username: 'admin',
+  password: '123123'
 })
 
 const registerForm = ref({
