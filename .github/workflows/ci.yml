@@ -12,15 +12,22 @@ jobs:
       id-token: write
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # 获取完整的 git 历史，确保 git 命令可以正常工作
       - uses: actions/setup-node@v4
         with:
           node-version: 20
           registry-url: 'https://registry.npmjs.org'
 
       - name: Build
+        working-directory: ./frontend
         run: |
-          git rev-parse --short HEAD
-          git log -1 --format=%ci
+          # 验证 git 命令可以正常工作
+          echo "Current directory: $(pwd)"
+          echo "Git root: $(git rev-parse --show-toplevel)"
+          echo "Git commit hash: $(git rev-parse --short HEAD)"
+          echo "Git commit date: $(git log -1 --format=%ci)"
+          # 安装依赖并构建
           npm install
           npm run build
           echo 'prompt-ui.xiechengqi.top' > dist/CNAME
@@ -29,6 +36,6 @@ jobs:
         uses: peaceiris/actions-gh-pages@v4
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./dist
+          publish_dir: ./frontend/dist
           user_name: github-actions[bot]
           user_email: github-actions[bot]@users.noreply.github.com
