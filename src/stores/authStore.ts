@@ -102,41 +102,12 @@ export const useAuthStore = defineStore('auth', () => {
       isLoading.value = false
     }
   }
-  
-  /**
-   * 本地用户注册
-   */
-  const register = async (username: string, password: string, name?: string): Promise<{ success: boolean; error?: string }> => {
-    isLoading.value = true
-    try {
-      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL || ''}/api/auth/local/register`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ username, password, name }),
-      })
-      
-      const result = await response.json()
-      
-      if (result.code === 200) {
-        return { success: true }
-      } else {
-        return { success: false, error: result.message || '注册失败' }
-      }
-    } catch (error) {
-      return { success: false, error: '网络错误，请稍后重试' }
-    } finally {
-      isLoading.value = false
-    }
-  }
-  
+
   /**
    * 获取认证配置
    */
   const getAuthConfig = async (): Promise<{
     local_auth_enabled: boolean
-    registration_enabled: boolean
   } | null> => {
     try {
       const response = await fetch(`${import.meta.env.VITE_API_BASE_URL || ''}/api/auth/config`)
@@ -284,7 +255,6 @@ export const useAuthStore = defineStore('auth', () => {
     setToken,
     setUser,
     loginWithPassword,
-    register,
     getAuthConfig,
     refreshToken,
     fetchUserInfo,

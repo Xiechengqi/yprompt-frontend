@@ -105,113 +105,8 @@
               <span v-if="isSubmitting">登录中...</span>
               <span v-else>登录</span>
             </button>
-
-            <!-- 注册链接 -->
-            <div v-if="authConfig.registration_enabled" class="register-link">
-              还没有账号？
-              <a @click.prevent="showRegister = true" href="#" class="register-btn">立即注册</a>
-            </div>
           </form>
         </div>
-
-        <!-- 注册表单（弹窗） -->
-        <Transition name="modal">
-          <div v-if="showRegister" class="modal-overlay" @click.self="closeRegister">
-            <div class="modal-content" @click.stop>
-              <div class="modal-header">
-                <h2>注册新账号</h2>
-                <button @click="closeRegister" class="modal-close" aria-label="关闭">
-                  <X :size="20" />
-                </button>
-              </div>
-              
-              <form @submit.prevent="handleRegister" class="register-form">
-                <div class="form-group">
-                  <label for="reg-username">用户名</label>
-                  <div class="input-wrapper">
-                    <input
-                      id="reg-username"
-                      v-model="registerForm.username"
-                      type="text"
-                      class="form-input"
-                      :class="{ 'input-error': registerErrors.username }"
-                      placeholder="3-20个字符，字母开头"
-                      :disabled="isSubmitting"
-                      autocomplete="username"
-                      @blur="validateRegisterForm"
-                      @input="clearRegisterError('username')"
-                    />
-                    <div v-if="registerForm.username && !registerErrors.username" class="input-icon success">
-                      <Check :size="18" />
-                    </div>
-                  </div>
-                  <div v-if="registerErrors.username" class="field-error">{{ registerErrors.username }}</div>
-                  <div v-else class="field-hint">3-20个字符，字母开头，可包含字母、数字、下划线</div>
-                </div>
-
-                <div class="form-group">
-                  <label for="reg-password">密码</label>
-                  <div class="input-wrapper">
-                    <input
-                      id="reg-password"
-                      v-model="registerForm.password"
-                      :type="showRegisterPassword ? 'text' : 'password'"
-                      class="form-input"
-                      :class="{ 'input-error': registerErrors.password }"
-                      placeholder="至少8个字符，包含字母和数字"
-                      :disabled="isSubmitting"
-                      autocomplete="new-password"
-                      @blur="validateRegisterForm"
-                      @input="clearRegisterError('password')"
-                    />
-                    <button
-                      type="button"
-                      class="password-toggle"
-                      @click="showRegisterPassword = !showRegisterPassword"
-                      :disabled="isSubmitting"
-                      tabindex="-1"
-                    >
-                      <Eye v-if="!showRegisterPassword" :size="18" />
-                      <EyeOff v-else :size="18" />
-                    </button>
-                  </div>
-                  <div v-if="registerErrors.password" class="field-error">{{ registerErrors.password }}</div>
-                  <div v-else class="field-hint">至少8个字符，包含字母和数字</div>
-                </div>
-
-                <div class="form-group">
-                  <label for="reg-name">显示名称（可选）</label>
-                  <input
-                    id="reg-name"
-                    v-model="registerForm.name"
-                    type="text"
-                    class="form-input"
-                    placeholder="留空则使用用户名"
-                    :disabled="isSubmitting"
-                    autocomplete="name"
-                  />
-                </div>
-
-                <Transition name="fade">
-                  <div v-if="errorMessage" class="error-message">
-                    <AlertCircle :size="16" />
-                    <span>{{ errorMessage }}</span>
-                  </div>
-                </Transition>
-
-                <button
-                  type="submit"
-                  class="btn btn-primary btn-block"
-                  :disabled="isSubmitting || !isRegisterFormValid"
-                >
-                  <Loader2 v-if="isSubmitting" :size="18" class="spinning" />
-                  <span v-if="isSubmitting">注册中...</span>
-                  <span v-else>注册</span>
-                </button>
-              </form>
-            </div>
-          </div>
-        </Transition>
       </div>
     </div>
   </div>
@@ -221,15 +116,14 @@
 import { ref, onMounted, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/authStore'
-import { Eye, EyeOff, Check, AlertCircle, Loader2, X } from 'lucide-vue-next'
+import { Eye, EyeOff, Check, AlertCircle, Loader2 } from 'lucide-vue-next'
 
 const router = useRouter()
 const authStore = useAuthStore()
 
 // 认证配置
 const authConfig = ref({
-  local_auth_enabled: true,
-  registration_enabled: true
+  local_auth_enabled: true
 })
 
 // 表单数据
@@ -238,28 +132,15 @@ const loginForm = ref({
   password: '123123'
 })
 
-const registerForm = ref({
-  username: '',
-  password: '',
-  name: ''
-})
-
 // 状态
 const isLoading = ref(true)
 const isSubmitting = ref(false)
 const errorMessage = ref('')
-const showRegister = ref(false)
 const showPassword = ref(false)
-const showRegisterPassword = ref(false)
 const rememberMe = ref(false)
 
 // 表单验证错误
 const loginErrors = ref<{
-  username?: string
-  password?: string
-}>({})
-
-const registerErrors = ref<{
   username?: string
   password?: string
 }>({})
@@ -295,40 +176,17 @@ const validateLoginForm = () => {
   return Object.keys(loginErrors.value).length === 0
 }
 
-const validateRegisterForm = () => {
-  registerErrors.value = {}
-  const usernameError = validateUsername(registerForm.value.username)
-  const passwordError = validatePassword(registerForm.value.password, true)
-  
-  if (usernameError) registerErrors.value.username = usernameError
-  if (passwordError) registerErrors.value.password = passwordError
-  
-  return Object.keys(registerErrors.value).length === 0
-}
-
 const clearFieldError = (field: 'username' | 'password') => {
   if (loginErrors.value[field]) {
     delete loginErrors.value[field]
   }
 }
 
-const clearRegisterError = (field: 'username' | 'password') => {
-  if (registerErrors.value[field]) {
-    delete registerErrors.value[field]
-  }
-}
-
 // 计算属性：表单是否有效
 const isLoginFormValid = computed(() => {
-  return loginForm.value.username.length > 0 && 
+  return loginForm.value.username.length > 0 &&
          loginForm.value.password.length > 0 &&
          Object.keys(loginErrors.value).length === 0
-})
-
-const isRegisterFormValid = computed(() => {
-  return registerForm.value.username.length > 0 && 
-         registerForm.value.password.length > 0 &&
-         Object.keys(registerErrors.value).length === 0
 })
 
 // 获取认证配置
@@ -388,51 +246,6 @@ const handleLocalLogin = async () => {
   } finally {
     isSubmitting.value = false
   }
-}
-
-// 注册新账号
-const handleRegister = async () => {
-  if (!validateRegisterForm()) {
-    return
-  }
-
-  errorMessage.value = ''
-  isSubmitting.value = true
-
-  try {
-    const result = await authStore.register(
-      registerForm.value.username.trim(),
-      registerForm.value.password,
-      registerForm.value.name.trim() || undefined
-    )
-
-    if (result.success) {
-      // 注册成功，使用注册的用户名和密码自动登录
-      loginForm.value.username = registerForm.value.username.trim()
-      loginForm.value.password = registerForm.value.password
-      showRegister.value = false
-      await handleLocalLogin()
-    } else {
-      errorMessage.value = result.error || '注册失败，请检查输入信息'
-    }
-  } catch (error) {
-    errorMessage.value = '注册失败，请检查输入信息'
-    console.error('注册失败:', error)
-  } finally {
-    isSubmitting.value = false
-  }
-}
-
-// 关闭注册弹窗
-const closeRegister = () => {
-  showRegister.value = false
-  errorMessage.value = ''
-  registerForm.value = {
-    username: '',
-    password: '',
-    name: ''
-  }
-  registerErrors.value = {}
 }
 
 onMounted(() => {
