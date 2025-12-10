@@ -7,3 +7,4 @@ pnpm-lock.yaml
 .*
 # 但不忽略 .gitignore 文件
 !.gitignore
+!.github
