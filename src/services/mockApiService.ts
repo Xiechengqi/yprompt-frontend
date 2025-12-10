@@ -128,7 +128,7 @@ export const mockApiService = {
   },
 
   // 刷新 Token
-  async refreshToken(oldToken: string) {
+  async refreshToken(_oldToken: string) {
     await delay(200)
     const newToken = generateMockToken()
     return {
