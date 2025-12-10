@@ -1,9 +1,11 @@
 /**
  * 认证状态管理
  * 管理用户登录、token、用户信息
+ * 支持 debug 模式，在 debug 模式下使用 mock API
  */
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
+import { isDebugMode, mockRequest } from '@/services/mockApiService'
 
 export interface User {
   id: number
@@ -70,35 +72,43 @@ export const useAuthStore = defineStore('auth', () => {
   const loginWithPassword = async (username: string, password: string): Promise<{ success: boolean; message?: string }> => {
     isLoading.value = true
     try {
-      const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || ''
-      const url = `${apiBaseUrl}/api/auth/local/login`
+      let result: any
       
-      const response = await fetch(url, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ username, password }),
-      })
-      
-      // 检查响应状态
-      if (!response.ok) {
-        // 尝试解析错误响应
-        try {
-          const errorResult = await response.json()
-          return {
-            success: false,
-            message: errorResult.message || `请求失败: ${response.status} ${response.statusText}`
-          }
-        } catch (parseError) {
-          return {
-            success: false,
-            message: `网络错误: ${response.status} ${response.statusText}`
+      // Debug 模式：使用 mock API
+      if (isDebugMode()) {
+        result = await mockRequest('POST', '/api/auth/local/login', { username, password })
+      } else {
+        // 正常模式：使用真实 API
+        const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || ''
+        const url = `${apiBaseUrl}/api/auth/local/login`
+        
+        const response = await fetch(url, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ username, password }),
+        })
+        
+        // 检查响应状态
+        if (!response.ok) {
+          // 尝试解析错误响应
+          try {
+            const errorResult = await response.json()
+            return {
+              success: false,
+              message: errorResult.message || `请求失败: ${response.status} ${response.statusText}`
+            }
+          } catch (parseError) {
+            return {
+              success: false,
+              message: `网络错误: ${response.status} ${response.statusText}`
+            }
           }
         }
+        
+        result = await response.json()
       }
-      
-      const result = await response.json()
       
       if (result.code === 200 && result.data) {
         setToken(result.data.token)
@@ -145,8 +155,16 @@ export const useAuthStore = defineStore('auth', () => {
     login_username?: string
   } | null> => {
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL || ''}/api/auth/config`)
-      const result = await response.json()
+      let result: any
+      
+      // Debug 模式：使用 mock API
+      if (isDebugMode()) {
+        result = await mockRequest('GET', '/api/auth/config')
+      } else {
+        // 正常模式：使用真实 API
+        const response = await fetch(`${import.meta.env.VITE_API_BASE_URL || ''}/api/auth/config`)
+        result = await response.json()
+      }
       
       if (result.code === 200 && result.data) {
         return result.data
@@ -164,15 +182,22 @@ export const useAuthStore = defineStore('auth', () => {
     if (!token.value) return false
     
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL || ''}/api/auth/refresh`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token.value}`,
-          'Content-Type': 'application/json',
-        },
-      })
+      let result: any
       
-      const result = await response.json()
+      // Debug 模式：使用 mock API
+      if (isDebugMode()) {
+        result = await mockRequest('POST', '/api/auth/refresh')
+      } else {
+        // 正常模式：使用真实 API
+        const response = await fetch(`${import.meta.env.VITE_API_BASE_URL || ''}/api/auth/refresh`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token.value}`,
+            'Content-Type': 'application/json',
+          },
+        })
+        result = await response.json()
+      }
       
       if (result.code === 200 && result.data) {
         setToken(result.data.token)
@@ -191,14 +216,21 @@ export const useAuthStore = defineStore('auth', () => {
     if (!token.value) return false
     
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL || ''}/api/auth/userinfo`, {
-        method: 'GET',
-        headers: {
-          'Authorization': `Bearer ${token.value}`,
-        },
-      })
+      let result: any
       
-      const result = await response.json()
+      // Debug 模式：使用 mock API
+      if (isDebugMode()) {
+        result = await mockRequest('GET', '/api/auth/userinfo')
+      } else {
+        // 正常模式：使用真实 API
+        const response = await fetch(`${import.meta.env.VITE_API_BASE_URL || ''}/api/auth/userinfo`, {
+          method: 'GET',
+          headers: {
+            'Authorization': `Bearer ${token.value}`,
+          },
+        })
+        result = await response.json()
+      }
       
       if (result.code === 200 && result.data) {
         setUser(result.data)
@@ -216,12 +248,18 @@ export const useAuthStore = defineStore('auth', () => {
   const logout = async () => {
     if (token.value) {
       try {
-        await fetch(`${import.meta.env.VITE_API_BASE_URL || ''}/api/auth/logout`, {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${token.value}`,
-          },
-        })
+        // Debug 模式：使用 mock API
+        if (isDebugMode()) {
+          await mockRequest('POST', '/api/auth/logout')
+        } else {
+          // 正常模式：使用真实 API
+          await fetch(`${import.meta.env.VITE_API_BASE_URL || ''}/api/auth/logout`, {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${token.value}`,
+            },
+          })
+        }
       } catch (error) {
         // 忽略登出错误，继续清除本地状态
       }

@@ -13,6 +13,8 @@ interface ImportMetaEnv {
   readonly VITE_LOGIN_PASSWORD?: string
   readonly VITE_GIT_COMMIT_HASH?: string
   readonly VITE_GIT_COMMIT_DATE?: string
+  readonly VITE_DEBUG_MODE?: string  // 'true' 启用 debug 模式
+  readonly MODE?: string  // 'debug' 模式
 }
 
 interface ImportMeta {

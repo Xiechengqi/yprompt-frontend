@@ -13,6 +13,11 @@
         </div>
         <h1 class="login-title">YPrompt</h1>
         <p class="login-subtitle">提示词管理系统</p>
+        <!-- Debug 模式提示 -->
+        <div v-if="isDebugMode" class="debug-badge">
+          <span class="debug-icon">🐛</span>
+          <span>Debug 模式（Mock API）</span>
+        </div>
       </div>
 
       <!-- 加载状态 -->
@@ -122,10 +127,14 @@ import { ref, onMounted, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/authStore'
 import { Eye, EyeOff, Check, AlertCircle, Loader2 } from 'lucide-vue-next'
+import { isDebugMode as checkDebugMode } from '@/services/mockApiService'
 import GitCommit from '@/components/GitCommit.vue'
 
 const router = useRouter()
 const authStore = useAuthStore()
+
+// Debug 模式状态
+const isDebugMode = computed(() => checkDebugMode())
 
 // 认证配置
 const authConfig = ref({
@@ -363,6 +372,24 @@ onMounted(() => {
   font-size: 14px;
   color: #718096;
   margin: 0;
+}
+
+.debug-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 12px;
+  padding: 6px 12px;
+  background: rgba(255, 193, 7, 0.1);
+  border: 1px solid rgba(255, 193, 7, 0.3);
+  border-radius: 8px;
+  font-size: 12px;
+  color: #856404;
+  font-weight: 500;
+}
+
+.debug-icon {
+  font-size: 14px;
 }
 
 .loading-state {
