@@ -20,7 +20,6 @@ jobs:
           registry-url: 'https://registry.npmjs.org'
 
       - name: Build
-        working-directory: ./frontend
         run: |
           # 验证 git 命令可以正常工作
           echo "Current directory: $(pwd)"
