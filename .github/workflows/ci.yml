@@ -27,7 +27,8 @@ jobs:
           # 方式2：直接在这里设置（不推荐，会暴露在代码中）
           #   将下面的 ${{ secrets.BACKEND_API_URL }} 替换为实际的后端地址，例如：
           #   VITE_API_BASE_URL: 'https://your-backend-api.com'
-          VITE_API_BASE_URL: ${{ secrets.BACKEND_API_URL }}
+          # VITE_API_BASE_URL: ${{ secrets.BACKEND_API_URL }}
+          VITE_API_BASE_URL: 'http://localhost:8002'
           # Debug 模式：如果未配置后端 API，自动启用 debug 模式
           # 在 debug 模式下，前端使用 mock API，完全不依赖后端
           # 可以通过设置 VITE_DEBUG_MODE=false 强制禁用
