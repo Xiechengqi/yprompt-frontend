@@ -21,18 +21,13 @@ jobs:
 
       - name: Build
         env:
-          # 设置后端 API 地址
-          # 方式1：使用 GitHub Secrets（推荐）
-          #   在仓库 Settings > Secrets and variables > Actions 中添加 BACKEND_API_URL
-          # 方式2：直接在这里设置（不推荐，会暴露在代码中）
-          #   将下面的 ${{ secrets.BACKEND_API_URL }} 替换为实际的后端地址，例如：
-          #   VITE_API_BASE_URL: 'https://your-backend-api.com'
-          # VITE_API_BASE_URL: ${{ secrets.BACKEND_API_URL }}
-          VITE_API_BASE_URL: 'http://localhost:8002'
-          # Debug 模式：如果未配置后端 API，自动启用 debug 模式
-          # 在 debug 模式下，前端使用 mock API，完全不依赖后端
-          # 可以通过设置 VITE_DEBUG_MODE=false 强制禁用
-          VITE_DEBUG_MODE: ${{ secrets.BACKEND_API_URL == '' && 'true' || secrets.DEBUG_MODE || 'false' }}
+          # 设置后端 API 地址（写死的生产地址）
+          # 如需修改，请直接更改下面的值
+          VITE_API_BASE_URL: 'https://api.prompt-ui.xiechengqi.top'
+          # Debug 模式：从环境变量配置
+          # 如果 VITE_API_BASE_URL 为空或未设置，会在脚本中自动启用 debug 模式
+          # 也可以直接设置 VITE_DEBUG_MODE=true 强制启用
+          VITE_DEBUG_MODE: 'false'
         run: |
           # 验证配置
           echo "Current directory: $(pwd)"
@@ -40,10 +35,11 @@ jobs:
           echo "Git commit hash: $(git rev-parse --short HEAD)"
           echo "Git commit date: $(git log -1 --format=%ci)"
           echo "Backend API URL: $VITE_API_BASE_URL"
-          echo "Debug Mode: $VITE_DEBUG_MODE"
+          echo "Debug Mode (initial): $VITE_DEBUG_MODE"
           
           # 检查配置并自动启用 debug 模式
-          if [ -z "$VITE_API_BASE_URL" ]; then
+          # 如果 VITE_API_BASE_URL 为空或未设置，自动启用 debug 模式
+          if [ -z "$VITE_API_BASE_URL" ] || [ "$VITE_API_BASE_URL" == "" ]; then
             if [ "$VITE_DEBUG_MODE" != "true" ]; then
               echo "⚠️  警告: VITE_API_BASE_URL 未设置，自动启用 debug 模式"
               export VITE_DEBUG_MODE=true
@@ -52,12 +48,15 @@ jobs:
             fi
           fi
           
+          # 最终确认 debug 模式状态
           if [ "$VITE_DEBUG_MODE" == "true" ]; then
             echo "✅ Debug 模式已启用，前端将使用 mock API，不依赖后端服务"
             echo "   可以使用任意用户名密码登录，或使用 admin/admin123"
           else
             echo "✅ 使用真实后端 API: $VITE_API_BASE_URL"
           fi
+          
+          echo "Debug Mode (final): $VITE_DEBUG_MODE"
           
           # 安装依赖并构建
           npm install
