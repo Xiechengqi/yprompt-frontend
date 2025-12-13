@@ -20,6 +20,3 @@ interface ImportMetaEnv {
 interface ImportMeta {
   readonly env: ImportMetaEnv
 }
-
-// 编译时内置提供商配置
-declare const __BUILTIN_PROVIDERS__: import('@/config/builtinProviders').BuiltinProviderConfig[]

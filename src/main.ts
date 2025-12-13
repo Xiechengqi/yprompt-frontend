@@ -51,30 +51,48 @@ const app = createApp(App)
 app.use(pinia)
 app.use(router)
 
+// 提前导入并初始化 authStore，避免路由切换时的动态导入延迟
+// 在 pinia 初始化后立即导入，确保路由守卫可以同步访问
+let authStoreInstance: ReturnType<typeof import('./stores/authStore').useAuthStore> | null = null
+
+// 预加载 authStore（异步但不阻塞）
+import('./stores/authStore').then(({ useAuthStore }) => {
+  authStoreInstance = useAuthStore()
+})
+
 // 路由守卫：未登录跳转到登录页
-router.beforeEach(async (to, _from, next) => {
-  // 动态导入 authStore（需要在 pinia 初始化后）
-  const { useAuthStore } = await import('./stores/authStore')
-  const authStore = useAuthStore()
-  
+router.beforeEach((to, _from, next) => {
   // 公开页面（登录页、回调页）直接放行
   if (to.meta.public) {
     next()
     return
   }
   
-  // 检查是否已登录
-  if (!authStore.isLoggedIn) {
-    // 未登录，重定向到登录页，并保存原始目标路径用于登录后跳转
-    next({
-      path: '/login',
-      query: { redirect: to.fullPath } // 保存原始路径
+  // 如果 authStore 已加载，直接使用；否则延迟导入（仅首次）
+  if (authStoreInstance) {
+    // 检查是否已登录
+    if (!authStoreInstance.isLoggedIn) {
+      next({
+        path: '/login',
+        query: { redirect: to.fullPath }
+      })
+      return
+    }
+    next()
+  } else {
+    // 首次加载时异步导入（这种情况很少发生）
+    import('./stores/authStore').then(({ useAuthStore }) => {
+      authStoreInstance = useAuthStore()
+      if (!authStoreInstance.isLoggedIn) {
+        next({
+          path: '/login',
+          query: { redirect: to.fullPath }
+        })
+      } else {
+        next()
+      }
     })
-    return
   }
-  
-  // 已登录，正常跳转
-  next()
 })
 
 app.mount('#app')

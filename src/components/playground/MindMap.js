@@ -2,7 +2,7 @@
 
 
 import { ref, onMounted, onUnmounted, watch, nextTick } from 'vue';
-import * as d3 from 'd3';
+import { loadD3 } from '@/utils/chartLazyLoader';
 
 export default {
   name: 'MindMap',
@@ -12,20 +12,52 @@ export default {
   emits: ['error'],
   template: `
     <div ref="containerRef" class="w-full h-full bg-white overflow-hidden relative select-none">
+      <!-- Loading State -->
+      <div v-if="isLoading" class="absolute inset-0 flex items-center justify-center bg-white z-10">
+        <div class="flex flex-col items-center gap-3">
+          <div class="w-8 h-8 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin"></div>
+          <p class="text-sm text-gray-600">正在加载图表库...</p>
+        </div>
+      </div>
       <div class="absolute top-3 left-3 bg-white/90 backdrop-blur text-slate-500 text-xs px-2.5 py-1.5 rounded-md z-10 border border-slate-200 shadow-sm font-medium flex items-center gap-2">
         <i data-lucide="move" class="w-3 h-3"></i>
         Pan & Zoom
       </div>
-      <svg ref="svgRef" class="w-full h-full cursor-grab active:cursor-grabbing block"></svg>
+      <svg ref="svgRef" class="w-full h-full cursor-grab active:cursor-grabbing block" :class="{ 'opacity-0': isLoading }"></svg>
     </div>
   `,
   setup(props, { emit }) {
     const containerRef = ref(null);
     const svgRef = ref(null);
+    const isLoading = ref(false);
     let resizeObserver = null;
+    let d3 = null;
 
-    const renderTree = () => {
+    const renderTree = async () => {
       if (!props.content || !svgRef.value || !containerRef.value) return;
+      
+      // Lazy load D3 if not loaded
+      if (!d3) {
+        isLoading.value = true;
+        try {
+          d3 = await loadD3();
+        } catch (error) {
+          isLoading.value = false;
+          emit('error', `Failed to load D3: ${error.message}`);
+          const svg = d3 ? d3.select(svgRef.value) : null;
+          if (svg) {
+            svg.selectAll("*").remove();
+            svg.append("text")
+               .attr("x", "50%")
+               .attr("y", "50%")
+               .attr("text-anchor", "middle")
+               .attr("fill", "#ef4444")
+               .text("Failed to load D3 library");
+          }
+          return;
+        }
+        isLoading.value = false;
+      }
       
       // Parse JSON safely
       let data;
@@ -203,6 +235,6 @@ export default {
       nextTick(renderTree);
     });
 
-    return { containerRef, svgRef };
+    return { containerRef, svgRef, isLoading };
   }
 };

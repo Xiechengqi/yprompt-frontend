@@ -1,39 +1,7 @@
 <template>
   <div class="space-y-6">
-    <!-- 当前模型信息 -->
-    <div v-if="currentModel && currentProvider" class="bg-blue-50 border border-blue-200 rounded-lg p-4">
-      <div class="flex items-center justify-between">
-        <div>
-          <h3 class="text-sm font-medium text-gray-900">当前配置模型</h3>
-          <p class="text-sm text-gray-600 mt-1">
-            {{ currentProvider.name }} - {{ currentModel.name }}
-          </p>
-        </div>
-        <div class="flex items-center space-x-2 text-xs">
-          <span :class="[
-            'px-2 py-1 rounded',
-            currentApiType === 'openai' ? 'bg-green-100 text-green-700' :
-            currentApiType === 'anthropic' ? 'bg-purple-100 text-purple-700' :
-            currentApiType === 'google' ? 'bg-blue-100 text-blue-700' :
-            'bg-gray-100 text-gray-700'
-          ]">
-            {{ currentApiType === 'openai' ? 'OpenAI' :
-               currentApiType === 'anthropic' ? 'Claude' :
-               currentApiType === 'google' ? 'Gemini' : 'Unknown' }}
-          </span>
-        </div>
-      </div>
-    </div>
-
-    <!-- 无模型选中提示 -->
-    <div v-else class="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-      <p class="text-sm text-yellow-800">
-        请先在「AI模型」标签页选择一个提供商和模型
-      </p>
-    </div>
-
     <!-- 参数配置表单 -->
-    <div v-if="currentModel" class="space-y-4">
+    <div class="space-y-4">
       <div class="flex items-center justify-between">
         <h3 class="text-lg font-semibold text-gray-900">模型参数</h3>
         <button
@@ -216,16 +184,13 @@
       <div class="mt-6 p-4 bg-gray-50 border border-gray-200 rounded-lg">
         <h4 class="text-sm font-medium text-gray-900 mb-2">参数说明</h4>
         <ul class="text-xs text-gray-600 space-y-1">
-          <li v-if="currentApiType === 'openai'">
-            • OpenAI 模型支持: Temperature, Max Tokens, Top P, Frequency Penalty, Presence Penalty
-          </li>
-          <li v-else-if="currentApiType === 'anthropic'">
-            • Claude 模型支持: Temperature, Max Tokens, Top P, Top K
-          </li>
-          <li v-else-if="currentApiType === 'google'">
-            • Gemini 模型支持: Temperature, Max Tokens, Top P, Top K
-          </li>
-          <li class="mt-2">这些参数会在调用 AI 时自动应用，无需手动配置</li>
+          <li>• Temperature: 控制输出的随机性（0-2）</li>
+          <li>• Max Tokens: 生成的最大token数量</li>
+          <li>• Top P: 核采样参数，控制考虑的词汇范围</li>
+          <li>• Frequency Penalty: 降低重复词汇的频率（OpenAI）</li>
+          <li>• Presence Penalty: 鼓励模型谈论新话题（OpenAI）</li>
+          <li>• Top K: 只考虑概率最高的K个词汇（Claude/Gemini）</li>
+          <li class="mt-2">这些参数会全局应用到所有AI模型，无需单独配置</li>
         </ul>
       </div>
     </div>
@@ -233,14 +198,12 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch } from 'vue'
+import { ref, watch, onMounted, nextTick } from 'vue'
 import { useModelParams } from '../../composables/useModelParams'
+import { useSettingsStore } from '@/stores/settingsStore'
 import type { ModelParams } from '@/stores/settingsStore'
 
 const {
-  currentModel,
-  currentProvider,
-  currentApiType,
   getCurrentParams,
   updateCurrentModelParams,
   resetToDefaults,
@@ -250,16 +213,48 @@ const {
   getParamDescription
 } = useModelParams()
 
+const settingsStore = useSettingsStore()
 const params = ref<ModelParams>(getCurrentParams())
 
-watch(currentModel, () => {
+// 更新参数的函数
+const updateParams = () => {
   params.value = getCurrentParams()
+}
+
+// 监听设置加载完成（当 providers 数组长度变化时，说明设置已加载）
+watch(() => settingsStore.providers.length, () => {
+  // 延迟更新，确保参数已加载
+  nextTick(() => {
+    updateParams()
+  })
+})
+
+// 监听全局参数变化
+watch(() => settingsStore.globalModelParams, () => {
+  // 当全局参数变化时，更新显示
+  nextTick(() => {
+    updateParams()
+  })
+}, { deep: true })
+
+// 组件挂载时确保参数已加载
+onMounted(async () => {
+  // 等待设置加载完成
+  await nextTick()
+  updateParams()
 })
 
 const handleParamChange = (paramName: keyof ModelParams, event: Event) => {
   const target = event.target as HTMLInputElement
   const value = parseFloat(target.value)
-  
+
+  // 立即更新本地状态（用于 UI 响应）
+  params.value = {
+    ...params.value,
+    [paramName]: value
+  }
+
+  // 保存到 store
   updateCurrentModelParams({
     [paramName]: value
   })

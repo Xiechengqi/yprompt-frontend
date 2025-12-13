@@ -1,74 +1,26 @@
-import { computed } from 'vue'
 import { useSettingsStore } from '@/stores/settingsStore'
 import type { ModelParams } from '@/stores/settingsStore'
 
 export function useModelParams() {
   const settingsStore = useSettingsStore()
 
-  // 获取当前选中的模型
-  const currentModel = computed(() => settingsStore.getCurrentModel())
-  const currentProvider = computed(() => settingsStore.getCurrentProvider())
-
-  // 当前模型的 API 类型
-  const currentApiType = computed(() => {
-    if (!currentModel.value) return null
-    return currentModel.value.apiType || currentProvider.value?.type || null
-  })
-
-  // 获取默认参数值（基于最佳实践）
-  const getDefaultParams = (apiType: 'openai' | 'anthropic' | 'google' | 'custom' | null): ModelParams => {
-    const defaults: ModelParams = {
-      temperature: 1.0,      // 平衡创造性和稳定性（AI 对话/生成场景最佳实践）
-      maxTokens: 8192,       // 足够长的输出，适合提示词生成场景
-      topP: 0.95,            // 核采样，保留 95% 概率质量（避免极端词汇）
-    }
-
-    if (apiType === 'openai' || apiType === 'custom') {
-      defaults.frequencyPenalty = 0    // 不惩罚词频（提示词生成需要重复关键词）
-      defaults.presencePenalty = 0     // 不强制多样性
-    } else if (apiType === 'anthropic' || apiType === 'google') {
-      defaults.topK = 0      // 0 表示不限制（Claude/Gemini 推荐）
-    }
-
-    return defaults
-  }
-
-  // 获取当前模型的参数（如果没有则返回默认值）
+  // 获取全局模型参数（应用到所有模型）
   const getCurrentParams = (): ModelParams => {
-    if (!currentModel.value) {
-      return getDefaultParams(null)
-    }
-    
-    const modelParams = currentModel.value.params
-    const defaultParams = getDefaultParams(currentApiType.value)
-    
-    return {
-      ...defaultParams,
-      ...modelParams
-    }
+    console.log('[useModelParams] 获取全局模型参数:', settingsStore.globalModelParams)
+    return { ...settingsStore.globalModelParams }
   }
 
-  // 更新当前模型的参数
+  // 更新全局模型参数
   const updateCurrentModelParams = (params: Partial<ModelParams>) => {
-    const provider = currentProvider.value
-    const model = currentModel.value
-    
-    if (!provider || !model) {
-      console.warn('[useModelParams] 没有选中的模型')
-      return
-    }
-
-    const providerInStore = settingsStore.providers.find(p => p.id === provider.id)
-    if (!providerInStore) return
-
-    const modelInStore = providerInStore.models.find(m => m.id === model.id)
-    if (!modelInStore) return
+    console.log('[useModelParams] 更新全局模型参数:', params)
 
     // 合并参数
-    modelInStore.params = {
-      ...modelInStore.params,
+    settingsStore.globalModelParams = {
+      ...settingsStore.globalModelParams,
       ...params
     }
+
+    console.log('[useModelParams] 更新后的全局参数:', settingsStore.globalModelParams)
 
     // 保存到 localStorage
     settingsStore.saveSettings()
@@ -76,30 +28,22 @@ export function useModelParams() {
 
   // 重置为默认参数
   const resetToDefaults = () => {
-    const defaultParams = getDefaultParams(currentApiType.value)
+    console.log('[useModelParams] 重置全局参数为默认值')
+    const defaultParams: ModelParams = {
+      temperature: 1.0,
+      maxTokens: 8192,
+      topP: 0.95,
+      frequencyPenalty: 0,
+      presencePenalty: 0,
+      topK: 0
+    }
     updateCurrentModelParams(defaultParams)
   }
 
-  // 检查参数是否支持（根据 API 类型）
+  // 检查参数是否支持（所有参数都支持，因为是全局的）
   const isParamSupported = (paramName: keyof ModelParams): boolean => {
-    const apiType = currentApiType.value
-
-    switch (paramName) {
-      case 'temperature':
-      case 'maxTokens':
-      case 'topP':
-        return true // 所有类型都支持
-      
-      case 'frequencyPenalty':
-      case 'presencePenalty':
-        return apiType === 'openai'
-      
-      case 'topK':
-        return apiType === 'anthropic' || apiType === 'google'
-      
-      default:
-        return false
-    }
+    // 所有基础参数都支持显示
+    return ['temperature', 'maxTokens', 'topP', 'frequencyPenalty', 'presencePenalty', 'topK'].includes(paramName)
   }
 
   // 获取参数的取值范围
@@ -148,9 +92,6 @@ export function useModelParams() {
   }
 
   return {
-    currentModel,
-    currentProvider,
-    currentApiType,
     getCurrentParams,
     updateCurrentModelParams,
     resetToDefaults,

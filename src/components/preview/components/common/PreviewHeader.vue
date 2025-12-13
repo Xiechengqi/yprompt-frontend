@@ -1,21 +1,13 @@
 <template>
   <div class="p-4 border-b border-gray-200 flex items-center justify-between">
     <div class="flex items-center space-x-3">
-      <h2 class="font-semibold text-gray-800">生成预览</h2>
+      <h4 class="font-semibold text-gray-800">生成预览</h4>
       <div v-if="currentExecutionStep || (isGenerating && !currentExecutionStep)" class="flex items-center px-2 py-1 bg-blue-50 text-blue-700 rounded-full text-xs border border-blue-200">
         <RefreshCw class="w-3 h-3 animate-spin mr-1" />
         <span>{{ currentExecutionStep ? getStepDisplayName(currentExecutionStep): '生成需求报告' }}</span>
       </div>
     </div>
     <div class="flex items-center space-x-3">
-      <button
-        v-if="isMobile && isExpanded"
-        @click="$emit('toggle')"
-        class="p-1 hover:bg-gray-100 rounded transition-colors"
-        title="折叠"
-      >
-        <ChevronUp class="w-5 h-5 text-gray-500" />
-      </button>
       <div class="flex items-center space-x-2">
         <label class="flex items-center cursor-pointer">
           <input
@@ -33,18 +25,15 @@
 </template>
 
 <script setup lang="ts">
-import { RefreshCw, ChevronUp } from 'lucide-vue-next'
+import { RefreshCw } from 'lucide-vue-next'
 
 defineProps<{
-  isMobile?: boolean
-  isExpanded?: boolean
   isAutoMode: boolean
   currentExecutionStep: 'report' | 'thinking' | 'initial' | 'advice' | 'final' | null
   isGenerating: boolean
 }>()
 
 defineEmits<{
-  toggle: []
   'update:isAutoMode': [value: boolean]
 }>()
 

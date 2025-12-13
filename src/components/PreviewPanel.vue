@@ -1,12 +1,9 @@
 <template>
   <div class="bg-white rounded-lg shadow-sm flex flex-col h-full">
     <PreviewHeader
-      :is-mobile="props.isMobile"
-      :is-expanded="props.isExpanded"
       :is-auto-mode="promptStore.isAutoMode"
       :current-execution-step="promptStore.currentExecutionStep"
       :is-generating="promptStore.isGenerating"
-      @toggle="$emit('toggle')"
       @update:is-auto-mode="promptStore.isAutoMode = $event"
     />
 
@@ -86,7 +83,6 @@
       <ThinkingTab
         v-if="tabs.activeTab.value === 'thinking'"
         :thinking-points="promptStore.promptData.thinkingPoints || []"
-        :is-mobile="props.isMobile"
         :is-auto-mode="promptStore.isAutoMode"
         :is-executing="execution.isExecuting.value"
         :is-generating="promptStore.isGenerating"
@@ -118,7 +114,6 @@
       <AdviceTab
         v-if="tabs.activeTab.value === 'advice'"
         :advice="promptStore.promptData.advice || []"
-        :is-mobile="props.isMobile"
         :is-auto-mode="promptStore.isAutoMode"
         :is-executing="execution.isExecuting.value"
         :is-generating="promptStore.isGenerating"
@@ -170,6 +165,9 @@
 <script setup lang="ts">
 import { ref, watch, nextTick } from 'vue'
 import { usePromptStore } from '@/stores/promptStore'
+import { useNotificationStore } from '@/stores/notificationStore'
+
+const notificationStore = useNotificationStore()
 
 import PreviewHeader from './preview/components/common/PreviewHeader.vue'
 import TabContainer from './preview/components/common/TabContainer.vue'
@@ -191,11 +189,6 @@ import { usePreviewScrollSync } from './preview/composables/usePreviewScrollSync
 import { usePreviewClipboard } from './preview/composables/usePreviewClipboard'
 import { usePreviewListOperations } from './preview/composables/usePreviewListOperations'
 import { usePreviewHelpers } from './preview/composables/usePreviewHelpers'
-
-const props = defineProps<{
-  isMobile?: boolean
-  isExpanded?: boolean
-}>()
 
 defineEmits<{
   toggle: []
@@ -239,7 +232,7 @@ const savePrompt = () => {
   }
 
   if (!finalPrompt || !finalPrompt.trim()) {
-    alert('没有可保存的提示词内容')
+    notificationStore.warning('没有可保存的提示词内容', 2000)
     return
   }
 
@@ -294,7 +287,7 @@ const handleSaveConfirm = async (formData: {
     const result = await response.json()
 
     if (result.code === 200) {
-      alert('提示词保存成功！')
+      notificationStore.success('提示词保存成功！', 2000)
       showSaveDialog.value = false
       // TODO: 跳转到"我的"页面显示已保存的提示词
     } else {
@@ -303,7 +296,7 @@ const handleSaveConfirm = async (formData: {
 
   } catch (err: any) {
     console.error('保存提示词失败:', err)
-    alert(`保存失败: ${err.message}`)
+    notificationStore.error(`保存失败: ${err.message}`, 3000)
   } finally {
     isSaving.value = false
   }

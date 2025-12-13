@@ -1,7 +1,6 @@
 <template>
-  <div class="h-full flex flex-col overflow-hidden p-2 playground-container">
-    <SettingsModal />
-    <SystemPromptModal
+  <div class="w-full h-full flex flex-col overflow-hidden p-2 playground-container">
+      <SystemPromptModal
       :is-open="showSystemPromptModal"
       v-model="systemPromptDraft"
       :title="'设置系统提示词'"
@@ -12,47 +11,13 @@
     <div class="bg-white rounded-lg shadow-sm p-4 mb-4 flex-shrink-0">
       <div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
         <div class="min-w-0">
-          <h1 class="text-xl lg:text-2xl font-bold text-gray-900">提示词操练场</h1>
+          <h2 class="text-xl lg:text-2xl font-bold text-gray-900">提示词操练场</h2>
           <p class="text-sm text-gray-500">实时调试提示词、网页、图表与可视化 Artifact</p>
-        </div>
-        <div class="flex items-center gap-3 flex-wrap lg:flex-nowrap">
-          <div class="flex items-center gap-2 flex-wrap sm:flex-nowrap">
-            <label class="text-sm font-medium text-gray-700 whitespace-nowrap">AI模型:</label>
-            <select
-              v-model="settingsStore.selectedProvider"
-              @change="onProviderChange"
-              class="px-3 py-1 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-blue-500 min-w-[160px]"
-            >
-              <option value="">选择提供商</option>
-              <option
-                v-for="provider in availableProviders"
-                :key="provider.id"
-                :value="provider.id"
-              >
-                {{ provider.name }}
-              </option>
-            </select>
-            <select
-              v-model="settingsStore.selectedModel"
-              @change="settingsStore.saveSettings"
-              :disabled="!settingsStore.selectedProvider"
-              class="px-3 py-1 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-blue-500 disabled:opacity-50 min-w-[160px]"
-            >
-              <option value="">选择模型</option>
-              <option
-                v-for="model in availableModels"
-                :key="model.id"
-                :value="model.id"
-              >
-                {{ model.name }}
-              </option>
-            </select>
-          </div>
         </div>
       </div>
     </div>
 
-    <div class="flex-1 min-h-0">
+    <div class="flex-1 min-h-0 overflow-hidden">
       <PlaygroundApp
         :system-prompt="systemPrompt"
         @open-system-prompt="openSystemPromptModal"
@@ -62,30 +27,22 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
+import { ref, watch, onMounted } from 'vue'
 import PlaygroundApp from '@/components/playground/PlaygroundApp.js'
 import SystemPromptModal from '@/components/modules/optimize/components/SystemPromptModal.vue'
-import SettingsModal from '@/components/settings/SettingsModal.vue'
 import '@/utils/playgroundGlobals'
 import '@/style/playground.css'
-import { useSettingsStore } from '@/stores/settingsStore'
+import { useProviderStore } from '@/stores/providerStore'
 
-const settingsStore = useSettingsStore()
+const providerStore = useProviderStore()
 
-const availableProviders = computed(() => settingsStore.getAvailableProviders())
-const availableModels = computed(() => {
-  if (!settingsStore.selectedProvider) return []
-  return settingsStore.getAvailableModels(settingsStore.selectedProvider)
-})
-
-const onProviderChange = () => {
-  settingsStore.selectedModel = ''
-  const models = availableModels.value
-  if (models.length > 0) {
-    settingsStore.selectedModel = models[0].id
+// 初始化 providerStore
+onMounted(async () => {
+  // 如果还没有加载配置，则初始化
+  if (providerStore.allProviders.length === 0) {
+    await providerStore.initialize()
   }
-  settingsStore.saveSettings()
-}
+})
 
 const STORAGE_KEY = 'yprompt_playground_system_prompt'
 const systemPrompt = ref('')

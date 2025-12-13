@@ -2,7 +2,7 @@
   <div class="bg-white rounded-lg shadow-sm flex flex-col h-full overflow-hidden border border-gray-100">
     <!-- Header -->
     <div class="p-4 border-b border-gray-200 flex items-center justify-between flex-shrink-0">
-      <div class="h-6">AI对话</div>
+      <h4 class="font-semibold text-gray-800">AI对话</h4>
       <div class="flex items-center gap-3">
         <div class="flex items-center gap-2">
           <span class="text-sm text-gray-600">流式:</span>

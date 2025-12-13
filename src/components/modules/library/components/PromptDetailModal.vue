@@ -268,13 +268,13 @@
               <span>标签:</span>
               <div class="flex flex-wrap gap-1">
                 <span
-                  v-for="tag in prompt.tags"
+                  v-for="tag in promptTags"
                   :key="tag"
                   class="inline-block px-2 py-1 bg-blue-100 text-blue-700 text-xs rounded-full"
                 >
                   {{ tag }}
                 </span>
-                <span v-if="prompt.tags.length === 0" class="text-xs text-gray-500">暂无标签</span>
+                <span v-if="promptTags.length === 0" class="text-xs text-gray-500">暂无标签</span>
               </div>
             </div>
             
@@ -387,33 +387,17 @@
 <script setup lang="ts">
 import { ref, computed, watch, nextTick } from 'vue'
 import { copyToClipboard as copyUtil } from '@/utils/clipboardUtils'
+import { useNotificationStore } from '@/stores/notificationStore'
 import VersionHistoryContent from './VersionHistoryContent.vue'
+import type { Prompt, PromptListItem } from '@/types/prompt'
+
+const notificationStore = useNotificationStore()
 
 // API配置
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || ''
 
-interface Prompt {
-  id: number
-  title: string
-  description: string
-  final_prompt: string
-  prompt_type: string
-  tags: string[]
-  is_favorite: number | boolean  // 兼容后端返回的数字类型
-  is_public: number | boolean  // 兼容后端返回的数字类型
-  view_count: number
-  use_count: number
-  current_version: string
-  language: string
-  format: string
-  create_time: string
-  update_time: string
-  system_prompt?: string  // 系统提示词（用户提示词专用）
-  conversation_history?: string  // 对话上下文（用户提示词专用）
-}
-
 const props = defineProps<{
-  prompt: Prompt | null
+  prompt: Prompt | PromptListItem | null
 }>()
 
 const emit = defineEmits<{
@@ -438,6 +422,15 @@ const tagInputRef = ref<HTMLInputElement>()
 const isSaving = ref(false)
 const shouldStartEditing = ref(false)
 
+// 确保 tags 始终是数组格式
+const promptTags = computed(() => {
+  if (!props.prompt) return []
+  const tags = props.prompt.tags
+  return Array.isArray(tags)
+    ? tags
+    : (typeof tags === 'string' ? tags.split(',').map((t: string) => t.trim()).filter((t: string) => t) : [])
+})
+
 const tabs = [
   { key: 'content', label: '提示词内容' },
   { key: 'info', label: '基本信息' },
@@ -459,7 +452,11 @@ const handleEdit = () => {
   editedDescription.value = props.prompt.description || ''
   editedPromptType.value = props.prompt.prompt_type || 'system'
   editedIsPublic.value = !!props.prompt.is_public
-  editedTags.value = [...props.prompt.tags]
+  // 确保 tags 是数组格式
+  const tags = props.prompt.tags
+  editedTags.value = Array.isArray(tags)
+    ? [...tags]
+    : (typeof tags === 'string' ? tags.split(',').map((t: string) => t.trim()).filter((t: string) => t) : [])
   isEditing.value = true
 }
 
@@ -487,20 +484,20 @@ const addTag = () => {
   
   // 验证：最多5个标签
   if (editedTags.value.length >= 5) {
-    alert('最多只能添加5个标签')
+    notificationStore.warning('最多只能添加5个标签', 2000)
     return
   }
   
   // 验证：标签不重复
   if (editedTags.value.includes(tag)) {
-    alert('标签已存在')
+    notificationStore.warning('标签已存在', 2000)
     tagInput.value = ''
     return
   }
   
   // 验证：最多8个字符
   if (tag.length > 8) {
-    alert('标签最多8个字符')
+    notificationStore.warning('标签最多8个字符', 2000)
     return
   }
   
@@ -564,7 +561,7 @@ const handleSaveEdit = async () => {
 
     const result = await response.json()
     if (result.code === 200) {
-      alert('保存成功')
+      notificationStore.success('保存成功', 2000)
       isEditing.value = false
       // 更新本地数据
       if (props.prompt) {
@@ -582,7 +579,7 @@ const handleSaveEdit = async () => {
     }
   } catch (err: any) {
     console.error('保存失败:', err)
-    alert(`保存失败: ${err.message}`)
+    notificationStore.error(`保存失败: ${err.message}`, 3000)
   } finally {
     isSaving.value = false
   }
@@ -594,11 +591,10 @@ const handleCopy = async () => {
   
   try {
     await copyUtil(props.prompt.final_prompt)
-    // 这里可以显示一个toast提示
-    alert('提示词已复制到剪贴板')
+    notificationStore.success('提示词已复制到剪贴板', 2000)
   } catch (err) {
     console.error('复制失败:', err)
-    alert('复制失败')
+    notificationStore.error('复制失败', 2000)
   }
 }
 

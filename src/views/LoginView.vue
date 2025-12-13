@@ -1,9 +1,5 @@
 <template>
   <div class="login-container">
-    <!-- Git Commit 显示在右上角 -->
-    <div class="absolute top-2 right-2 z-50">
-      <GitCommit />
-    </div>
     
     <div class="login-card">
       <!-- Logo和标题 -->
@@ -31,27 +27,12 @@
         <!-- 本地账号密码登录 -->
         <div v-if="authConfig.local_auth_enabled" class="login-section">
           <form @submit.prevent="handleLocalLogin" class="login-form">
-            <!-- 用户名 -->
+            <!-- 用户名显示（固定为admin） -->
             <div class="form-group">
-              <label for="username">用户名</label>
-              <div class="input-wrapper">
-                <input
-                  id="username"
-                  v-model="loginForm.username"
-                  type="text"
-                  class="form-input"
-                  :class="{ 'input-error': loginErrors.username }"
-                  placeholder="请输入用户名"
-                  :disabled="isSubmitting"
-                  autocomplete="username"
-                  @blur="validateLoginForm"
-                  @input="clearFieldError('username')"
-                />
-                <div v-if="loginForm.username && !loginErrors.username" class="input-icon success">
-                  <Check :size="18" />
-                </div>
+              <label>用户名</label>
+              <div class="form-input readonly-input" style="background: #f7fafc; color: #4a5568;">
+                admin
               </div>
-              <div v-if="loginErrors.username" class="field-error">{{ loginErrors.username }}</div>
             </div>
 
             <!-- 密码 -->
@@ -126,9 +107,8 @@
 import { ref, onMounted, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/authStore'
-import { Eye, EyeOff, Check, AlertCircle, Loader2 } from 'lucide-vue-next'
+import { Eye, EyeOff, AlertCircle, Loader2 } from 'lucide-vue-next'
 import { isDebugMode as checkDebugMode } from '@/services/mockApiService'
-import GitCommit from '@/components/GitCommit.vue'
 
 const router = useRouter()
 const authStore = useAuthStore()
@@ -141,9 +121,8 @@ const authConfig = ref({
   local_auth_enabled: true
 })
 
-// 表单数据（从环境变量读取用户名）
+// 表单数据
 const loginForm = ref({
-  username: import.meta.env.VITE_LOGIN_USERNAME || '',
   password: ''
 })
 
@@ -156,20 +135,10 @@ const rememberMe = ref(false)
 
 // 表单验证错误
 const loginErrors = ref<{
-  username?: string
   password?: string
 }>({})
 
 // 表单验证
-const validateUsername = (username: string): string | null => {
-  if (!username) return '请输入用户名'
-  if (username.length < 3) return '用户名至少3个字符'
-  if (username.length > 20) return '用户名不能超过20个字符'
-  if (!/^[a-zA-Z]/.test(username)) return '用户名必须以字母开头'
-  if (!/^[a-zA-Z0-9_]+$/.test(username)) return '用户名只能包含字母、数字和下划线'
-  return null
-}
-
 const validatePassword = (password: string): string | null => {
   if (!password) return '请输入密码'
   return null
@@ -177,16 +146,14 @@ const validatePassword = (password: string): string | null => {
 
 const validateLoginForm = () => {
   loginErrors.value = {}
-  const usernameError = validateUsername(loginForm.value.username)
   const passwordError = validatePassword(loginForm.value.password)
-  
-  if (usernameError) loginErrors.value.username = usernameError
+
   if (passwordError) loginErrors.value.password = passwordError
-  
+
   return Object.keys(loginErrors.value).length === 0
 }
 
-const clearFieldError = (field: 'username' | 'password') => {
+const clearFieldError = (field: 'password') => {
   if (loginErrors.value[field]) {
     delete loginErrors.value[field]
   }
@@ -194,8 +161,7 @@ const clearFieldError = (field: 'username' | 'password') => {
 
 // 计算属性：表单是否有效
 const isLoginFormValid = computed(() => {
-  return loginForm.value.username.length > 0 &&
-         loginForm.value.password.length > 0 &&
+  return loginForm.value.password.length > 0 &&
          Object.keys(loginErrors.value).length === 0
 })
 
@@ -205,10 +171,6 @@ const fetchAuthConfig = async () => {
     const config = await authStore.getAuthConfig()
     if (config) {
       authConfig.value = config
-      // 如果环境变量没有设置用户名，使用后端返回的用户名
-      if (!loginForm.value.username && config.login_username) {
-        loginForm.value.username = config.login_username
-      }
     }
   } catch (error) {
     console.error('获取认证配置失败:', error)
@@ -220,7 +182,7 @@ const fetchAuthConfig = async () => {
 // 保存用户名
 const saveRememberedUsername = () => {
   if (rememberMe.value) {
-    localStorage.setItem('yprompt_remembered_username', loginForm.value.username)
+    localStorage.setItem('yprompt_remembered_username', 'admin')
   } else {
     localStorage.removeItem('yprompt_remembered_username')
   }
@@ -237,7 +199,7 @@ const handleLocalLogin = async () => {
 
   try {
     const result = await authStore.loginWithPassword(
-      loginForm.value.username.trim(),
+      'admin',  // 固定用户名
       loginForm.value.password
     )
 
@@ -253,7 +215,7 @@ const handleLocalLogin = async () => {
       }
     } else {
       // 显示详细的错误信息
-      errorMessage.value = result.message || '用户名或密码错误'
+      errorMessage.value = result.message || '密码错误'
     }
   } catch (error) {
     errorMessage.value = error instanceof Error ? error.message : '登录失败，请稍后重试'
@@ -268,13 +230,6 @@ onMounted(() => {
   if (authStore.isLoggedIn) {
     router.push('/')
     return
-  }
-
-  // 检查是否有记住的用户名
-  const saved = localStorage.getItem('yprompt_remembered_username')
-  if (saved) {
-    loginForm.value.username = saved
-    rememberMe.value = true
   }
 
   // 获取认证配置

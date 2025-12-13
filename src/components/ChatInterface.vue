@@ -1,5 +1,5 @@
 <template>
-  <div 
+  <div
     class="bg-white rounded-lg shadow-sm flex flex-col h-full max-h-full overflow-hidden relative"
     @dragover.prevent="chatAttachments.handleGlobalDragOver"
     @dragenter.prevent="chatAttachments.handleGlobalDragEnter"
@@ -8,27 +8,12 @@
   >
     <!-- Chat Header -->
     <ChatHeader
-      :is-mobile="props.isMobile"
-      :is-expanded="props.isExpanded"
       :is-stream-mode="chatModel.isStreamMode.value"
-      :model-title="chatModel.chatModel.value ? `当前模型: ${chatModel.getChatModelDisplay()}` : '选择AI助手专用模型'"
-      @toggle-model-selector="chatModel.showModelSelector.value = !chatModel.showModelSelector.value"
-      @toggle="$emit('toggle')"
+      :is-generating="promptStore.isGenerating"
+      :is-typing="promptStore.isTyping"
       @toggle-stream="chatModel.toggleStreamMode"
       @clear-chat="chatLogic.clearChat"
-    />
-
-    <!-- AI助手模型选择器 -->
-    <ChatModelSelector
-      :show="chatModel.showModelSelector.value"
-      v-model:chat-provider="chatModel.chatProvider.value"
-      v-model:chat-model="chatModel.chatModel.value"
-      :available-providers="chatModel.availableChatProviders.value"
-      :available-models="chatModel.availableChatModels.value"
-      :model-display="chatModel.getChatModelDisplay()"
-      @update:chat-provider="chatModel.onChatProviderChange"
-      @update:chat-model="chatModel.saveChatModelSettings"
-      @reset="chatModel.resetChatModel"
+      @interrupt="chatLogic.interruptGeneration"
     />
 
     <!-- Chat Messages -->
@@ -60,7 +45,6 @@
 
     <!-- Input Area -->
     <ChatInputArea
-      :is-mobile="props.isMobile"
       :is-editing="chatMessageOperations.isEditing.value"
       v-model:user-input="chatInput.userInput.value"
       :attachments="chatAttachments.currentAttachments.value"
@@ -107,7 +91,6 @@ import { Upload } from 'lucide-vue-next'
 
 // Import components
 import ChatHeader from '@/components/chat/components/ChatHeader.vue'
-import ChatModelSelector from '@/components/chat/components/ChatModelSelector.vue'
 import ChatMessageList from '@/components/chat/components/ChatMessageList.vue'
 import ChatQuickReplies from '@/components/chat/components/ChatQuickReplies.vue'
 import ChatInputArea from '@/components/chat/components/ChatInputArea.vue'
@@ -120,12 +103,6 @@ import { useChatModel } from '@/components/chat/composables/useChatModel'
 import { useChatQuickReplies } from '@/components/chat/composables/useChatQuickReplies'
 import { useChatMessageOperations } from '@/components/chat/composables/useChatMessageOperations'
 import { useChatLogic } from '@/components/chat/composables/useChatLogic'
-
-// Props
-const props = defineProps<{
-  isMobile?: boolean
-  isExpanded?: boolean
-}>()
 
 // Emits
 defineEmits<{
@@ -148,10 +125,7 @@ const chatMessageOperations = useChatMessageOperations(chatMessages.chatContaine
 
 const chatLogic = useChatLogic(
   chatMessages,
-  { 
-    ...chatModel,
-    showModelSelector: chatModel.showModelSelector 
-  },
+  chatModel,
   chatInput,
   chatAttachments,
   chatQuickReplies

@@ -1,59 +1,21 @@
-import { ref, computed, onMounted } from 'vue'
-import { useSettingsStore } from '@/stores/settingsStore'
+import { ref, onMounted } from 'vue'
+import { useProviderStore } from '@/stores/providerStore'
 
 export function useChatModel() {
-  const settingsStore = useSettingsStore()
-  const showModelSelector = ref(false)
-  const chatProvider = ref<string>('')
-  const chatModel = ref<string>('')
+  const providerStore = useProviderStore()
   const isStreamMode = ref(true)
 
-  const availableChatProviders = computed(() => {
-    return settingsStore.getAvailableProviders()
-  })
-
-  const availableChatModels = computed(() => {
-    if (!chatProvider.value) return []
-    return settingsStore.getAvailableModels(chatProvider.value)
-  })
-
-  const onChatProviderChange = () => {
-    chatModel.value = ''
-    const models = availableChatModels.value
-    if (models.length > 0) {
-      chatModel.value = models[0].id
-    }
-    saveChatModelSettings()
-  }
-
-  const saveChatModelSettings = () => {
-    localStorage.setItem('yprompt_chat_provider', chatProvider.value)
-    localStorage.setItem('yprompt_chat_model', chatModel.value)
-  }
-
-  const resetChatModel = () => {
-    chatProvider.value = ''
-    chatModel.value = ''
-    saveChatModelSettings()
-    showModelSelector.value = false
+  const getCurrentChatModel = () => {
+    // 直接使用全局选择的提供商和模型
+    const globalProvider = providerStore.currentProvider
+    const globalModel = providerStore.currentModel
+    return { provider: globalProvider, model: globalModel }
   }
 
   const getChatModelDisplay = () => {
-    if (!chatProvider.value || !chatModel.value) return '全局模型'
-    const provider = availableChatProviders.value.find(p => p.id === chatProvider.value)
-    const model = availableChatModels.value.find(m => m.id === chatModel.value)
-    return `${provider?.name} - ${model?.name}`
-  }
-
-  const getCurrentChatModel = () => {
-    if (chatProvider.value && chatModel.value) {
-      const provider = availableChatProviders.value.find(p => p.id === chatProvider.value)
-      const model = availableChatModels.value.find(m => m.id === chatModel.value)
-      return { provider, model }
-    }
-    const globalProvider = settingsStore.getCurrentProvider()
-    const globalModel = settingsStore.getCurrentModel()
-    return { provider: globalProvider, model: globalModel }
+    const { provider, model } = getCurrentChatModel()
+    if (!provider || !model) return '未选择模型'
+    return `${provider.name} - ${model.name}`
   }
 
   const toggleStreamMode = () => {
@@ -62,15 +24,6 @@ export function useChatModel() {
   }
 
   const loadSettings = () => {
-    const savedProvider = localStorage.getItem('yprompt_chat_provider')
-    const savedModel = localStorage.getItem('yprompt_chat_model')
-    if (savedProvider) {
-      chatProvider.value = savedProvider
-    }
-    if (savedModel) {
-      chatModel.value = savedModel
-    }
-
     const savedStreamMode = localStorage.getItem('yprompt_stream_mode')
     if (savedStreamMode !== null) {
       try {
@@ -86,17 +39,9 @@ export function useChatModel() {
   })
 
   return {
-    showModelSelector,
-    chatProvider,
-    chatModel,
     isStreamMode,
-    availableChatProviders,
-    availableChatModels,
-    onChatProviderChange,
-    saveChatModelSettings,
-    resetChatModel,
-    getChatModelDisplay,
     getCurrentChatModel,
+    getChatModelDisplay,
     toggleStreamMode,
     loadSettings
   }

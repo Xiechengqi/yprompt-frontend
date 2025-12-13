@@ -2,7 +2,7 @@
   <div class="h-full flex flex-col">
     <!-- 头部 -->
     <div class="p-4 border-b border-gray-200">
-      <h2 class="text-lg font-semibold text-gray-800 mb-1">优化建议</h2>
+      <h4 class="text-lg font-semibold text-gray-800 mb-1">优化建议</h4>
       <p class="text-sm text-gray-600">查看并应用AI生成的优化建议</p>
     </div>
 

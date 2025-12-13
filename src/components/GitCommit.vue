@@ -35,49 +35,48 @@ const commitDate = computed(() => {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 4px 10px;
-  background: rgba(255, 255, 255, 0.9);
-  border: 1px solid rgba(0, 0, 0, 0.1);
-  border-radius: 12px;
-  font-size: 11px;
+  padding: 2px 6px;
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  font-size: 10px;
   font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', 'Consolas', 'source-code-pro', monospace;
-  color: #666;
-  cursor: help;
-  transition: all 0.2s;
-  backdrop-filter: blur(4px);
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  color: #9ca3af;
+  cursor: default;
+  transition: color 0.2s;
 }
 
 .git-commit-badge:hover {
-  background: rgba(255, 255, 255, 1);
-  border-color: rgba(0, 0, 0, 0.15);
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
-  transform: translateY(-1px);
+  color: #6b7280;
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  transform: none;
 }
 
 .git-icon {
-  width: 14px;
-  height: 14px;
+  width: 12px;
+  height: 12px;
   flex-shrink: 0;
-  opacity: 0.7;
+  opacity: 0.5;
 }
 
 .commit-hash {
-  font-weight: 500;
-  letter-spacing: 0.5px;
-  user-select: all;
+  font-weight: 400;
+  letter-spacing: 0.3px;
+  user-select: text;
 }
 
 /* 移动端适配 */
 @media (max-width: 640px) {
   .git-commit-badge {
-    padding: 3px 8px;
-    font-size: 10px;
+    padding: 1px 4px;
+    font-size: 9px;
   }
-  
+
   .git-icon {
-    width: 12px;
-    height: 12px;
+    width: 10px;
+    height: 10px;
   }
 }
 </style>

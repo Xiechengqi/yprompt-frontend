@@ -8,7 +8,7 @@
       <div class="p-4 border-b border-gray-200 flex-shrink-0">
         <div class="flex justify-between items-center">
           <div class="flex items-center space-x-2">
-                <h2 class="font-semibold text-gray-800">优化前</h2>
+                <h4 class="font-semibold text-gray-800">优化前</h4>
                 <button
                   @click="showLeftSystemPromptModal = true"
                   class="flex items-center gap-1 px-2 py-1 hover:bg-gray-100 rounded transition-colors text-sm"
@@ -174,7 +174,7 @@
           <div class="p-4 border-b border-gray-200 flex-shrink-0">
             <div class="flex justify-between items-center">
               <div class="flex items-center space-x-2">
-                <h2 class="font-semibold text-gray-800">优化后</h2>
+                <h4 class="font-semibold text-gray-800">优化后</h4>
                 <button
                   @click="showRightSystemPromptModal = true"
                   class="flex items-center gap-1 px-2 py-1 hover:bg-gray-100 rounded transition-colors text-sm"

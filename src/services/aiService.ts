@@ -1,4 +1,4 @@
-import type { ProviderConfig } from '@/stores/settingsStore'
+import type { ProviderConfig } from '@/stores/providerStore'
 import type { ChatMessage as PromptChatMessage, MessageAttachment } from '@/stores/promptStore'
 import { 
   OpenAIProvider, 
@@ -27,6 +27,7 @@ export class AIService {
   private providers: Map<string, BaseProvider> = new Map()
   private streamProcessor: StreamProcessor
   private onStreamUpdate?: (content: string) => void
+  private abortController?: AbortController
 
   private constructor() {
     this.streamProcessor = new StreamProcessor()
@@ -89,17 +90,20 @@ export class AIService {
   }
 
   async callAI(
-    messages: ChatMessage[] | PromptChatMessage[], 
-    provider: ProviderConfig, 
-    modelId: string, 
+    messages: ChatMessage[] | PromptChatMessage[],
+    provider: ProviderConfig,
+    modelId: string,
     stream: boolean = false,
     streamCallback?: (chunk: string) => void
   ): Promise<string> {
     const model = provider.models.find(m => m.id === modelId)
     const apiType = model?.apiType || provider.type
 
+    const abortController = new AbortController()
+    this.abortController = abortController
+
     // 获取模型参数配置
-    const modelParams = model?.params
+    const modelParams = (model as any)?.params
     const apiParams: APICallParams | undefined = modelParams ? {
       temperature: modelParams.temperature,
       maxTokens: modelParams.maxTokens,
@@ -114,9 +118,9 @@ export class AIService {
       const providerInstance = this.getProvider(provider, modelId)
 
       if (stream) {
-        return await this.callWithStream(providerInstance, convertedMessages, apiParams, streamCallback)
+        return await this.callWithStream(providerInstance, convertedMessages, apiParams, streamCallback, abortController)
       } else {
-        const response = await providerInstance.callAPI(convertedMessages, false, apiParams)
+        const response = await providerInstance.callAPI(convertedMessages, false, apiParams, abortController)
         if (typeof response !== 'object' || !('content' in response)) {
           throw new Error('Expected AIResponse object')
         }
@@ -126,23 +130,31 @@ export class AIService {
         return content
       }
     } catch (error) {
+      if ((error as any)?.name === 'AbortError') {
+        throw error
+      }
       const friendlyErrorMessage = AIErrorHandler.parseError(error, apiType)
       throw new Error(friendlyErrorMessage)
+    } finally {
+      if (this.abortController === abortController) {
+        this.abortController = undefined
+      }
     }
   }
 
   private async callWithStream(
-    provider: BaseProvider, 
+    provider: BaseProvider,
     messages: AIChatMessage[],
     params: APICallParams | undefined,
-    streamCallback?: (chunk: string) => void
+    streamCallback?: (chunk: string) => void,
+    abortController?: AbortController
   ): Promise<string> {
     // 优先使用传入的回调，其次使用全局回调
     const callback = streamCallback || this.onStreamUpdate
     const hasGlobalCallback = !!this.onStreamUpdate
 
     try {
-      const stream = await provider.callAPI(messages, true, params)
+      const stream = await provider.callAPI(messages, true, params, abortController)
       if (typeof stream === 'string' || !('getReader' in stream)) {
         throw new Error('Expected ReadableStream for streaming')
       }
@@ -180,6 +192,14 @@ export class AIService {
 
   clearStreamUpdateCallback() {
     this.onStreamUpdate = undefined
+  }
+
+  abortCurrentRequest() {
+    if (this.abortController) {
+      this.abortController.abort()
+      this.abortController = undefined
+    }
+    this.clearStreamUpdateCallback()
   }
 
   async getAvailableModels(

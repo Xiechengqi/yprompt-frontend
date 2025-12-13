@@ -2,7 +2,7 @@
   <div class="h-full flex flex-col">
     <!-- 头部 -->
     <div class="p-4 border-b border-gray-200">
-      <h2 class="text-lg font-semibold text-gray-800 mb-1">提示词输入</h2>
+      <h4 class="text-lg font-semibold text-gray-800 mb-1">提示词输入</h4>
       <p class="text-sm text-gray-600">输入需要优化的提示词内容</p>
     </div>
 

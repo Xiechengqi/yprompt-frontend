@@ -235,6 +235,7 @@ import { useNavigationStore } from '@/stores/navigationStore'
 import { copyToClipboard as copyUtil } from '@/utils/clipboardUtils'
 import PromptDetailModal from './PromptDetailModal.vue'
 import VersionHistoryPanel from './VersionHistoryPanel.vue'
+import type { PromptListItem } from '@/types/prompt'
 
 // 定义 emits
 const emit = defineEmits<{
@@ -247,24 +248,6 @@ const searchKeyword = inject('searchKeyword', ref(''))
 // 防抖定时器（保留供将来使用）
 // let searchTimer: NodeJS.Timeout | null = null
 
-interface Prompt {
-  id: number
-  title: string
-  description: string
-  final_prompt: string
-  prompt_type: string
-  tags: string[]
-  is_favorite: number | boolean  // 兼容后端返回的数字类型
-  is_public: number | boolean  // 兼容后端返回的数字类型
-  view_count: number
-  use_count: number
-  current_version: string
-  language: string
-  format: string
-  create_time: string
-  update_time: string
-}
-
 const router = useRouter()
 const navigationStore = useNavigationStore()
 
@@ -272,7 +255,7 @@ const navigationStore = useNavigationStore()
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || ''
 
 // 数据状态
-const prompts = ref<Prompt[]>([])
+const prompts = ref<PromptListItem[]>([])
 const isLoading = ref(false)
 const currentPage = ref(1)
 const pageSize = 10
@@ -301,9 +284,9 @@ const searchWithKeyword = (keyword: string) => {
 // UI状态
 const showActionMenu = ref<Record<number, boolean>>({})
 const showDetailModal = ref(false)
-const selectedPrompt = ref<Prompt | null>(null)
+const selectedPrompt = ref<PromptListItem | null>(null)
 const showVersionHistory = ref(false)
-const selectedPromptForVersion = ref<Prompt | null>(null)
+const selectedPromptForVersion = ref<PromptListItem | null>(null)
 
 // 计算属性
 const totalPages = computed(() => Math.ceil(total.value / pageSize))
@@ -360,7 +343,8 @@ const loadPrompts = async () => {
       const allTags = new Set<string>()
       prompts.value.forEach(prompt => {
         if (prompt.tags) {
-          prompt.tags.forEach(tag => allTags.add(tag))
+          const tags = Array.isArray(prompt.tags) ? prompt.tags : []
+          tags.forEach((tag: string) => allTags.add(tag))
         }
       })
       availableTags.value = Array.from(allTags).sort()
@@ -369,7 +353,9 @@ const loadPrompts = async () => {
     }
   } catch (err: any) {
     console.error('加载提示词列表失败:', err)
-    alert(`加载失败: ${err.message}`)
+    const { useNotificationStore } = await import('@/stores/notificationStore')
+    const notificationStore = useNotificationStore()
+    notificationStore.error(`加载失败: ${err.message}`, 3000)
   } finally {
     isLoading.value = false
   }
@@ -396,7 +382,7 @@ const changePage = (page: number) => {
 }
 
 // 查看详情
-const handleViewPrompt = async (prompt: Prompt) => {
+const handleViewPrompt = async (prompt: PromptListItem) => {
   try {
     const token = localStorage.getItem('yprompt_token')
     if (!token) return
@@ -423,19 +409,19 @@ const handleViewPrompt = async (prompt: Prompt) => {
     const result = await response.json()
     if (result.code === 200) {
       // 更新prompt数据
-      selectedPrompt.value = result.data as Prompt
+      selectedPrompt.value = result.data
       showDetailModal.value = true
     }
   } catch (err) {
     console.error('获取提示词详情失败:', err)
     // 即使失败也显示弹窗（使用列表中的数据）
-    selectedPrompt.value = prompt as Prompt
+    selectedPrompt.value = prompt
     showDetailModal.value = true
   }
 }
 
 // 切换收藏状态（保留供将来使用）
-// const toggleFavorite = async (prompt: Prompt) => {
+// const toggleFavorite = async (prompt: PromptListItem) => {
 //   try {
 //     const token = localStorage.getItem('yprompt_token')
 //     if (!token) return
@@ -462,7 +448,7 @@ const handleViewPrompt = async (prompt: Prompt) => {
 // }
 
 // 编辑提示词
-const handleEditPrompt = (prompt: Prompt) => {
+const handleEditPrompt = (prompt: PromptListItem) => {
   selectedPrompt.value = prompt
   showDetailModal.value = true
   
@@ -476,7 +462,7 @@ const handleEditPrompt = (prompt: Prompt) => {
 }
 
 // 提示词更新完成回调
-const handlePromptUpdated = (updatedPrompt: Prompt) => {
+const handlePromptUpdated = (updatedPrompt: PromptListItem) => {
   // 更新列表中对应的数据
   const index = prompts.value.findIndex(p => p.id === updatedPrompt.id)
   if (index !== -1) {
@@ -487,25 +473,29 @@ const handlePromptUpdated = (updatedPrompt: Prompt) => {
 }
 
 // 优化提示词
-const handleOptimizePrompt = (prompt: Prompt) => {
+const handleOptimizePrompt = (prompt: PromptListItem) => {
   navigationStore.setCurrentModule('optimize')
   router.push(`/optimize/${prompt.id}`)
   showDetailModal.value = false
 }
 
 // 复制提示词
-const handleCopyPrompt = async (prompt: Prompt) => {
+const handleCopyPrompt = async (prompt: PromptListItem) => {
   try {
     await copyUtil(prompt.final_prompt)
-    alert('提示词已复制到剪贴板')
+    const { useNotificationStore } = await import('@/stores/notificationStore')
+    const notificationStore = useNotificationStore()
+    notificationStore.success('提示词已复制到剪贴板', 2000)
   } catch (err) {
     console.error('复制失败:', err)
-    alert('复制失败')
+    const { useNotificationStore } = await import('@/stores/notificationStore')
+    const notificationStore = useNotificationStore()
+    notificationStore.error('复制失败', 2000)
   }
 }
 
 // 显示版本历史
-const handleShowVersionHistory = (prompt: Prompt) => {
+const handleShowVersionHistory = (prompt: PromptListItem) => {
   selectedPromptForVersion.value = prompt
   showVersionHistory.value = true
   showActionMenu.value = {}
@@ -518,7 +508,7 @@ const handleVersionRollback = () => {
 }
 
 // 删除提示词
-const handleDeletePrompt = async (prompt: Prompt) => {
+const handleDeletePrompt = async (prompt: PromptListItem) => {
   if (!confirm(`确定要删除提示词"${prompt.title}"吗？此操作不可恢复。`)) {
     return
   }
@@ -548,14 +538,18 @@ const handleDeletePrompt = async (prompt: Prompt) => {
 
     const result = await response.json()
     if (result.code === 200) {
-      alert('删除成功')
+      const { useNotificationStore } = await import('@/stores/notificationStore')
+      const notificationStore = useNotificationStore()
+      notificationStore.success('删除成功', 2000)
       loadPrompts()
     } else {
       throw new Error(result.message || '删除失败')
     }
   } catch (err: any) {
     console.error('删除提示词失败:', err)
-    alert(`删除失败: ${err.message}`)
+      const { useNotificationStore } = await import('@/stores/notificationStore')
+      const notificationStore = useNotificationStore()
+      notificationStore.error(`删除失败: ${err.message}`, 3000)
   }
 }
 

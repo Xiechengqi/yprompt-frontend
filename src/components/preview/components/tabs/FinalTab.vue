@@ -26,7 +26,7 @@
         ref="textareaRef"
         :value="generatedPrompt"
         @input="$emit('update:generatedPrompt', ($event.target as HTMLTextAreaElement).value)"
-        class="w-full flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none resize-none"
+        class="w-full flex-1 px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none resize-none"
       ></textarea>
       
       <div v-if="generatedPrompt" class="space-y-2 pt-4 flex-shrink-0">

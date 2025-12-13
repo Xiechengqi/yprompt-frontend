@@ -1,14 +1,14 @@
 <template>
-  <div class="h-full flex flex-col bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
+  <div class="h-full flex flex-col bg-white rounded-lg shadow-sm border border-gray-200">
     <!-- 标题栏 -->
-    <div class="p-4 border-b border-gray-200 dark:border-gray-700 flex-shrink-0">
+    <div class="p-4 border-b border-gray-200 flex-shrink-0">
       <div class="flex justify-between items-center">
-        <h2 class="font-semibold text-gray-800 dark:text-white">构建对话上下文</h2>
+        <h4 class="font-semibold text-gray-800">构建对话上下文</h4>
         <div class="flex items-center space-x-3">
           <button
             @click="showSystemPromptModal = true"
-            class="flex items-center gap-1 px-2 py-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors text-sm"
-            :class="systemPromptValue.trim() ? 'text-green-600 dark:text-green-400' : 'text-gray-400 dark:text-gray-500'"
+            class="flex items-center gap-1 px-2 py-1 hover:bg-gray-100 rounded transition-colors text-sm"
+            :class="systemPromptValue.trim() ? 'text-green-600' : 'text-gray-400'"
             :title="systemPromptValue.trim() ? '系统提示词已设置' : '设置系统提示词'"
           >
             <FileText class="w-4 h-4" />
@@ -16,7 +16,7 @@
           </button>
           <button
             @click="handleRestart"
-            class="flex items-center gap-1 px-3 py-1 text-sm text-gray-600 dark:text-gray-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded transition-colors"
+            class="flex items-center gap-1 px-3 py-1 text-sm text-gray-600 hover:text-red-600 hover:bg-red-50 rounded transition-colors"
             title="重新开始"
           >
             <RefreshCw class="w-4 h-4" />
@@ -40,9 +40,9 @@
             <!-- 头像 -->
             <div class="flex-shrink-0" v-if="!message.isEditing">
               <div class="w-8 h-8 rounded-full flex items-center justify-center text-sm"
-                :class="message.role === 'user' 
-                  ? 'bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-300' 
-                  : 'bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-300'">
+                :class="message.role === 'user'
+                  ? 'bg-blue-100 text-blue-700'
+                  : 'bg-gray-200 text-gray-700'">
                 {{ message.role === 'user' ? '👤' : '🤖' }}
               </div>
             </div>
@@ -51,13 +51,13 @@
             <div class="flex flex-col w-full">
               <!-- 编辑状态 -->
               <div v-if="message.isEditing" class="relative">
-                <div class="relative border border-blue-300 rounded-2xl overflow-hidden bg-white dark:bg-gray-800">
+                <div class="relative border border-blue-300 rounded-2xl overflow-hidden bg-white">
                   <div class="relative">
                     <textarea
                       :value="message.content"
                       @input="messages.updateMessage(message.id, ($event.target as HTMLTextAreaElement).value)"
                       @keydown="handleEditKeydown($event, message.id)"
-                      class="w-full p-4 border-0 resize-none focus:outline-none text-gray-800 dark:text-white bg-white dark:bg-gray-800 min-h-[80px] max-h-[200px] overflow-y-auto text-base"
+                      class="w-full p-4 border-0 resize-none focus:outline-none text-gray-800 bg-white min-h-[80px] max-h-[200px] overflow-y-auto text-base"
                       placeholder="编辑消息内容..."
                     ></textarea>
                   </div>
@@ -70,7 +70,7 @@
                 :class="[
                   message.role === 'user' 
                     ? 'bg-blue-500 text-white' 
-                    : 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-white',
+                    : 'bg-gray-100 text-gray-800',
                   message.role === 'user' ? 'ml-auto' : 'mr-auto'
                 ]"
               >
@@ -98,14 +98,14 @@
                 <template v-if="message.isEditing">
                   <button
                     @click="messages.cancelEdit(message.id)"
-                    class="p-1.5 text-gray-500 hover:text-red-600 transition-colors rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700"
+                    class="p-1.5 text-gray-500 hover:text-red-600 transition-colors rounded-lg hover:bg-gray-100"
                     title="取消编辑"
                   >
                     <X class="w-3.5 h-3.5" />
                   </button>
                   <button
                     @click="messages.cancelEdit(message.id); saveMessageData()"
-                    class="p-1.5 text-gray-500 hover:text-blue-600 transition-colors rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700"
+                    class="p-1.5 text-gray-500 hover:text-blue-600 transition-colors rounded-lg hover:bg-gray-100"
                     title="保存"
                   >
                     <Check class="w-3.5 h-3.5" />
@@ -114,7 +114,7 @@
                 <template v-else>
                   <button
                     @click="messages.startEdit(message.id)"
-                    class="p-1.5 text-gray-500 hover:text-green-600 transition-colors rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700"
+                    class="p-1.5 text-gray-500 hover:text-green-600 transition-colors rounded-lg hover:bg-gray-100"
                     title="编辑消息"
                   >
                     <Edit2 class="w-3.5 h-3.5" />
@@ -122,7 +122,7 @@
                   
                   <button
                     @click="messages.updateMessageRole(message.id, message.role === 'user' ? 'ai' : 'user'); saveMessageData()"
-                    class="p-1.5 text-gray-500 hover:text-blue-600 transition-colors rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700"
+                    class="p-1.5 text-gray-500 hover:text-blue-600 transition-colors rounded-lg hover:bg-gray-100"
                     :title="message.role === 'user' ? '切换为AI助手' : '切换为用户'"
                   >
                     <ArrowLeftRight class="w-3.5 h-3.5" />
@@ -130,7 +130,7 @@
                   
                   <button
                     @click="messages.removeMessage(message.id); saveMessageData()"
-                    class="p-1.5 text-gray-500 hover:text-red-600 transition-colors rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700"
+                    class="p-1.5 text-gray-500 hover:text-red-600 transition-colors rounded-lg hover:bg-gray-100"
                     title="删除消息"
                   >
                     <Trash2 class="w-3.5 h-3.5" />
@@ -138,7 +138,7 @@
                   
                   <button
                     @click="copyMessage(message.content)"
-                    class="p-1.5 text-gray-500 hover:text-blue-600 transition-colors rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700"
+                    class="p-1.5 text-gray-500 hover:text-blue-600 transition-colors rounded-lg hover:bg-gray-100"
                     title="复制内容"
                   >
                     <Copy class="w-3.5 h-3.5" />
@@ -153,32 +153,32 @@
       <!-- 空状态 -->
       <div v-if="messages.state.messages.length === 0" class="flex items-center justify-center h-full text-center py-12">
         <div>
-          <MessageSquare class="w-12 h-12 mx-auto mb-3 text-gray-300 dark:text-gray-600" />
-          <p class="text-sm text-gray-500 dark:text-gray-400 mb-1">暂无对话历史</p>
-          <p class="text-xs text-gray-400 dark:text-gray-500">在下方输入框添加对话消息构建上下文</p>
+          <MessageSquare class="w-12 h-12 mx-auto mb-3 text-gray-300 " />
+          <p class="text-sm text-gray-500  mb-1">暂无对话历史</p>
+          <p class="text-xs text-gray-400 ">在下方输入框添加对话消息构建上下文</p>
         </div>
       </div>
     </div>
 
     <!-- 输入区域 -->
-    <div class="p-3 border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 flex-shrink-0 rounded-b-lg">
+    <div class="p-3 border-t border-gray-200  bg-white  flex-shrink-0 rounded-b-lg">
       <!-- 角色选择 -->
       <div class="flex items-center gap-2 mb-2">
         <select
           v-model="currentRole"
-          class="text-xs px-2 py-1 border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          class="text-xs px-2 py-1 border border-gray-300  rounded bg-white  text-gray-700 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
         >
           <option value="user">👤 用户</option>
           <option value="ai">🤖 AI助手</option>
         </select>
-        <span class="text-xs text-gray-500 dark:text-gray-400">
+        <span class="text-xs text-gray-500 ">
           {{ currentRole === 'user' ? '以用户身份发送消息' : '以AI助手身份发送消息' }}
         </span>
       </div>
 
       <!-- 输入框 -->
       <div 
-        class="relative border border-gray-300 dark:border-gray-600 rounded-2xl focus-within:outline-none focus-within:border-gray-300 overflow-hidden" 
+        class="relative border border-gray-300  rounded-2xl focus-within:outline-none focus-within:border-gray-300 overflow-hidden" 
         style="height: 120px;"
       >
         <div class="absolute top-0 left-0 right-0" style="bottom: 48px;">
@@ -186,15 +186,15 @@
             v-model="inputText"
             @keydown="handleKeydown"
             placeholder="输入消息内容 (Shift+Enter换行)"
-            class="w-full h-full px-4 pt-3 pb-1 border-0 outline-none resize-none text-base overflow-y-auto bg-transparent text-gray-800 dark:text-white"
+            class="w-full h-full px-4 pt-3 pb-1 border-0 outline-none resize-none text-base overflow-y-auto bg-transparent text-gray-800 "
             rows="1"
           ></textarea>
         </div>
         
         <div class="absolute bottom-0 left-0 right-0 h-12 flex justify-between items-center px-2 bg-transparent">
-          <div class="text-xs text-gray-500 dark:text-gray-400 ml-2">
+          <div class="text-xs text-gray-500  ml-2">
             {{ inputText.length }} 字
-            <span v-if="inputText.length > 0" class="ml-2 text-blue-600 dark:text-blue-400">
+            <span v-if="inputText.length > 0" class="ml-2 text-blue-600 ">
               · {{ getLengthCategory(inputText.length) }}
             </span>
           </div>
@@ -212,7 +212,7 @@
             <button
               @click="handleOptimize"
               :disabled="messages.state.messages.length === 0 || isOptimizing"
-              class="px-4 py-1.5 bg-green-600 hover:bg-green-700 disabled:bg-gray-300 dark:disabled:bg-gray-600 text-white text-sm rounded-full transition-colors disabled:cursor-not-allowed"
+              class="px-4 py-1.5 bg-green-600 hover:bg-green-700 disabled:bg-gray-300  text-white text-sm rounded-full transition-colors disabled:cursor-not-allowed"
               title="开始优化最后一条消息"
             >
               {{ isOptimizing ? '优化中...' : '优化' }}
@@ -300,7 +300,6 @@ onMounted(() => {
   
   // 如果正在从库加载，跳过本地编辑数据的加载，等待父组件设置props
   if (isLoadingFromLibrary) {
-    console.log('🔵 检测到从库加载数据，跳过本地编辑数据加载')
     return
   }
   
@@ -316,7 +315,6 @@ onMounted(() => {
         systemPromptValue.value = data.systemPrompt
         emit('update:systemPrompt', data.systemPrompt)
       }
-      console.log('🟢 已加载上次编辑的数据')
     }
   } catch (e) {
     console.error('加载保存数据失败:', e)
@@ -331,7 +329,6 @@ let isInternalUpdate = false
 watch(() => props.conversationHistory, (newVal, oldVal) => {
   // 只有在非内部更新且值真正改变时才重新加载
   if (!isInternalUpdate && newVal !== oldVal) {
-    console.log('🔵 检测到conversationHistory变化，准备加载:', newVal?.substring(0, 50))
     loadFromConversationHistory()
   }
 })
@@ -340,7 +337,6 @@ watch(() => props.conversationHistory, (newVal, oldVal) => {
 watch(() => props.modelValue, (newVal, oldVal) => {
   // 当draftPrompt变化且conversationHistory为空时，也要加载
   if (!isInternalUpdate && newVal !== oldVal && newVal?.trim() && !props.conversationHistory?.trim()) {
-    console.log('🔵 检测到draftPrompt变化(无对话历史)，准备加载:', newVal.substring(0, 50))
     loadFromConversationHistory()
   }
 })

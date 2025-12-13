@@ -2,7 +2,7 @@
   <div class="h-full flex flex-col">
     <!-- 头部 -->
     <div class="p-4 border-b border-gray-200">
-      <h2 class="text-lg font-semibold text-gray-800 mb-1">效果测试</h2>
+      <h4 class="text-lg font-semibold text-gray-800 mb-1">效果测试</h4>
       <p class="text-sm text-gray-600">测试优化前���的提示词效果对比</p>
     </div>
 
@@ -505,7 +505,6 @@ const testConnection = async (config: any) => {
   // 实现连接测试逻辑
   isTestingConnection.value = true
   try {
-    console.log('Testing connection for:', config)
     // 这里调用实际的连接测试API
   } catch (error) {
     console.error('Connection test failed:', error)
@@ -582,9 +581,7 @@ const rateResult = (index: number, rating: number) => {
 
 const copyResult = (result: any) => {
   if (result.data) {
-    copyUtil(result.data.response).then(() => {
-      console.log('Result copied to clipboard')
-    })
+    copyUtil(result.data.response)
   }
 }
 

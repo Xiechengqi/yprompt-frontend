@@ -1,56 +1,13 @@
 <template>
   <div class="h-full flex flex-col overflow-hidden p-2">
-    <!-- 模块特定顶栏（整合用户信息和搜索功能） -->
+    <!-- 模块特定顶栏（搜索和操作功能） -->
     <div class="bg-white rounded-lg shadow-sm p-6 mb-4 flex-shrink-0">
-      <!-- 主要内容区域：用户信息和搜索 -->
+      <!-- 主要内容区域：搜索和操作 -->
       <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
-        <!-- 用户信息区域 -->
-        <div v-if="authStore.isLoggedIn" class="flex items-center gap-4">
-          <!-- 头像 -->
-          <div class="relative">
-            <img 
-              v-if="authStore.user?.avatar" 
-              :src="authStore.user.avatar" 
-              :alt="authStore.user?.name"
-              class="w-14 h-14 rounded-full border-2 border-blue-500 shadow-md object-cover"
-            />
-            <div v-else class="w-14 h-14 rounded-full border-2 border-gray-300 bg-gray-100 flex items-center justify-center">
-              <svg class="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-              </svg>
-            </div>
-            <!-- 在线状态指示器 -->
-            <div class="absolute bottom-0 right-0 w-4 h-4 bg-green-400 rounded-full border-2 border-white"></div>
-          </div>
-          
-          <!-- 用户详情 -->
-          <div class="min-w-0">
-            <h2 class="text-xl font-bold text-gray-900">{{ authStore.user?.name || '用户' }}</h2>
-            <div class="flex items-center gap-3 text-sm text-gray-600 mt-1">
-              <span v-if="authStore.user?.email" class="flex items-center gap-1">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                </svg>
-                {{ authStore.user.email }}
-              </span>
-              <span v-if="authStore.user?.id" class="flex items-center gap-1">
-                ID: {{ authStore.user?.id }}
-              </span>
-            </div>
-          </div>
-        </div>
-        
-        <!-- 未登录提示 -->
-        <div v-else class="flex items-center gap-4">
-          <div class="w-14 h-14 rounded-full border-2 border-gray-300 bg-gray-100 flex items-center justify-center">
-            <svg class="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-            </svg>
-          </div>
-          <div>
-            <h2 class="text-xl font-bold text-gray-900">未登录</h2>
-            <p class="text-sm text-gray-600">请先登录以管理您的提示词</p>
-          </div>
+        <!-- 标题 -->
+        <div class="min-w-0">
+          <h2 class="text-xl lg:text-2xl font-bold text-gray-900">模板库</h2>
+          <p class="text-sm text-gray-500 mt-1">管理和使用您的提示词模板</p>
         </div>
         
         <!-- 搜索和操作区域 -->
@@ -81,17 +38,6 @@
               <span>新建提示词</span>
             </button>
             
-            <!-- 系统按钮组 -->
-            <div class="flex items-center gap-1 p-1 bg-gray-50 rounded-lg">
-              <button 
-                v-if="authStore.isLoggedIn"
-                @click="handleLogout"
-                class="px-3 py-2 text-sm text-red-600 hover:bg-red-50 rounded-md transition-colors font-medium"
-                title="登出"
-              >
-                登出
-              </button>
-            </div>
           </div>
         </div>
       </div>
@@ -123,7 +69,7 @@
           <svg class="w-16 h-16 mb-4 text-gray-400 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
           </svg>
-          <h2 class="text-2xl font-bold text-gray-800 mb-2">请先登录</h2>
+          <h4 class="text-2xl font-bold text-gray-800 mb-2">请先登录</h4>
           <p class="text-gray-600">
             登录后即可访问您的个人提示词库
           </p>
@@ -213,7 +159,9 @@ const handleCreatePrompt = async (formData: {
 
     const result = await response.json()
     if (result.code === 200) {
-      alert('提示词创建成功！')
+      const { useNotificationStore } = await import('@/stores/notificationStore')
+      const notificationStore = useNotificationStore()
+      notificationStore.success('提示词创建成功！', 2000)
       showCreateDialog.value = false
       newPromptContent.value = ''
       // 刷新列表（调用子组件的loadPrompts方法）
@@ -225,14 +173,11 @@ const handleCreatePrompt = async (formData: {
     }
   } catch (err: any) {
     console.error('创建提示词失败:', err)
-    alert(`创建失败: ${err.message}`)
+    const { useNotificationStore } = await import('@/stores/notificationStore')
+    const notificationStore = useNotificationStore()
+    notificationStore.error(`创建失败: ${err.message}`, 3000)
   } finally {
     isSaving.value = false
   }
-}
-
-// 登出
-const handleLogout = async () => {
-  await authStore.logout()
 }
 </script>

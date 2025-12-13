@@ -1,4 +1,5 @@
-import type { ProviderConfig, ModelCapabilities, ReasoningType, SupportedParams } from '@/stores/settingsStore'
+import type { ProviderConfig } from '@/stores/providerStore'
+import type { ModelCapabilities, ReasoningType, SupportedParams } from '@/stores/settingsStore'
 import { AIService } from './aiService'
 import type { ChatMessage } from './aiService'
 

@@ -607,7 +607,9 @@ const savePrompt = async () => {
 
     if (response.ok && result.code === 200) {
       // 保存成功，显示成功消息
-      alert('提示词保存成功！')
+      const { useNotificationStore } = await import('@/stores/notificationStore')
+      const notificationStore = useNotificationStore()
+      notificationStore.success('提示词保存成功！', 2000)
       console.log('保存成功，提示词ID:', result.data.id)
     } else {
       throw new Error(result.message || '保存失败')

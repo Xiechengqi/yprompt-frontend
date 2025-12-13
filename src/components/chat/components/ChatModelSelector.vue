@@ -60,7 +60,7 @@
 </template>
 
 <script setup lang="ts">
-import type { ProviderConfig, ModelConfig } from '@/stores/settingsStore'
+import type { ProviderConfig, ModelConfig } from '@/stores/providerStore'
 
 defineProps<{
   show: boolean

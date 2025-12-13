@@ -20,7 +20,12 @@ export abstract class BaseProvider {
    * @param params API 调用参数（temperature, maxTokens 等）
    * @returns Promise<AIResponse | ReadableStream<Uint8Array>>
    */
-  abstract callAPI(messages: ChatMessage[], stream: boolean, params?: APICallParams): Promise<AIResponse | ReadableStream<Uint8Array>>
+  abstract callAPI(
+    messages: ChatMessage[],
+    stream: boolean,
+    params?: APICallParams,
+    abortController?: AbortController
+  ): Promise<AIResponse | ReadableStream<Uint8Array>>
 
   /**
    * 解析流式响应块
@@ -36,10 +41,15 @@ export abstract class BaseProvider {
    * @param timeoutMs 超时时间（毫秒）
    * @returns Promise<Response>
    */
-  protected async fetchWithTimeout(url: string, options: RequestInit, timeoutMs: number = 300000): Promise<Response> {
-    const controller = new AbortController()
+  protected async fetchWithTimeout(
+    url: string,
+    options: RequestInit,
+    timeoutMs: number = 300000,
+    abortController?: AbortController
+  ): Promise<Response> {
+    const controller = abortController ?? new AbortController()
     const timeoutId = setTimeout(() => controller.abort(), timeoutMs)
-    
+
     try {
       const response = await fetch(url, {
         ...options,

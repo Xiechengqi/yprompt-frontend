@@ -14,23 +14,10 @@
       <div class="p-6 overflow-y-auto flex-1">
         <ProvidersTab
           v-if="activeTab === 'providers'"
-          :providers="settingsStore.providers"
-          :batch-testing-states="testing.batchTestingStates.value"
-          :testing-provider="testing.testingProvider.value"
-          :get-default-base-url="providerMgmt.getDefaultBaseUrl"
-          :get-test-button-title="testing.getTestButtonTitle"
-          :get-batch-test-button-title="testing.getBatchTestButtonTitle"
-          :get-api-type-color="modelMgmt.getApiTypeColor"
-          :get-api-type-label="modelMgmt.getApiTypeLabel"
-          @show-add-provider-type="providerMgmt.showAddProviderTypeDialog.value = true"
-          @edit-provider="providerMgmt.editProvider"
-          @delete-provider="providerMgmt.deleteProvider"
-          @batch-test="testing.batchTestModels"
-          @show-add-model="modelMgmt.showAddModel"
-          @edit-model="modelMgmt.editModel"
-          @delete-model="modelMgmt.deleteModel"
-          @test-model="testing.handleModelTestClick"
-          @save="settingsStore.saveSettings"
+          :providers="providerStore.allProviders"
+          :last-refreshed-at="providerStore.lastRefreshedAt"
+          :is-loading="providerStore.isLoading"
+          @refresh-config="handleRefreshConfig"
         />
 
         <PromptsTab
@@ -65,69 +52,37 @@
       </div>
     </div>
   </div>
-
-  <ProviderTypeDialog
-    v-if="providerMgmt.showAddProviderTypeDialog.value"
-    @select="providerMgmt.selectProviderType"
-    @close="providerMgmt.showAddProviderTypeDialog.value = false"
-  />
-
-  <ProviderDialog
-    v-if="providerMgmt.showAddProvider.value"
-    :editing="!!providerMgmt.editingProvider.value"
-    :provider-type="providerMgmt.selectedProviderType.value"
-    v-model:name="providerMgmt.newProvider.value.name"
-    v-model:base-url="providerMgmt.newProvider.value.baseUrl"
-    v-model:api-key="providerMgmt.newProvider.value.apiKey"
-    :get-default-base-url="providerMgmt.getDefaultBaseUrl"
-    :get-provider-template="providerMgmt.getProviderTemplate"
-    @save="providerMgmt.saveProvider"
-    @close="providerMgmt.closeProviderDialog"
-  />
-
-  <ModelDialog
-    v-if="modelMgmt.showAddModelDialog.value"
-    :editing="!!modelMgmt.editingModel.value"
-    :provider="modelMgmt.getProviderForModel(modelMgmt.addingModelToProvider.value)"
-    v-model:name="modelMgmt.newModel.value.name"
-    v-model:id="modelMgmt.newModel.value.id"
-    v-model:api-type="modelMgmt.newModel.value.apiType"
-    v-model:search-keyword="modelMgmt.modelSearchKeyword.value"
-    :available-models="modelMgmt.getCurrentProviderModels.value"
-    :loading="modelMgmt.loadingModels.value"
-    :error="modelMgmt.modelFetchError.value"
-    @fetch-models="modelMgmt.fetchAvailableModels"
-    @select-model="modelMgmt.selectModel"
-    @save="modelMgmt.addCustomModel"
-    @close="modelMgmt.closeAddModelDialog"
-  />
 </template>
 
 <script setup lang="ts">
 import { ref, onMounted, watch } from 'vue'
+import { useProviderStore } from '@/stores/providerStore'
 import { useSettingsStore } from '@/stores/settingsStore'
+import { useNotificationStore } from '@/stores/notificationStore'
 
 import SettingsButton from './settings/components/SettingsButton.vue'
 import SettingsHeader from './settings/components/SettingsHeader.vue'
 import ProvidersTab from './settings/components/tabs/ProvidersTab.vue'
 import PromptsTab from './settings/components/tabs/PromptsTab.vue'
-import ProviderTypeDialog from './settings/components/dialogs/ProviderTypeDialog.vue'
-import ProviderDialog from './settings/components/dialogs/ProviderDialog.vue'
-import ModelDialog from './settings/components/dialogs/ModelDialog.vue'
 
-import { useProviderManagement } from './settings/composables/useProviderManagement'
-import { useModelManagement } from './settings/composables/useModelManagement'
-import { useModelTesting } from './settings/composables/useModelTesting'
 import { usePromptRules } from './settings/composables/usePromptRules'
 
+const providerStore = useProviderStore()
 const settingsStore = useSettingsStore()
+const notificationStore = useNotificationStore()
 
 const activeTab = ref<'providers' | 'prompts'>('providers')
 
-const providerMgmt = useProviderManagement()
-const modelMgmt = useModelManagement()
-const testing = useModelTesting()
 const promptRules = usePromptRules()
+
+const handleRefreshConfig = async () => {
+  try {
+    await providerStore.refreshSettings()
+    notificationStore.success('配置已刷新')
+  } catch (error: any) {
+    notificationStore.error(`刷新配置失败: ${error.message || '未知错误'}`)
+  }
+}
 
 watch(activeTab, (newTab) => {
   if (newTab === 'prompts') {
@@ -136,6 +91,7 @@ watch(activeTab, (newTab) => {
 })
 
 onMounted(() => {
+  providerStore.initialize()
   settingsStore.loadSettings()
 })
 </script>

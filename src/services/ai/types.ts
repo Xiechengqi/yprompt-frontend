@@ -28,8 +28,8 @@ export interface AIResponse {
   finishReason?: string
 }
 
-// Re-export ProviderConfig from settingsStore for consistency
-export type { ProviderConfig } from '@/stores/settingsStore'
+// Re-export ProviderConfig from providerStore for consistency
+export type { ProviderConfig } from '@/stores/providerStore'
 
 export interface StreamChunk {
   content: string

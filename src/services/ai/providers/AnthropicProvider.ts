@@ -15,7 +15,12 @@ export class AnthropicProvider extends BaseProvider {
    * @param params API 调用参数
    * @returns Promise<AIResponse | ReadableStream<Uint8Array>>
    */
-  async callAPI(messages: ChatMessage[], stream: boolean, params?: APICallParams): Promise<AIResponse | ReadableStream<Uint8Array>> {
+  async callAPI(
+    messages: ChatMessage[],
+    stream: boolean,
+    params?: APICallParams,
+    abortController?: AbortController
+  ): Promise<AIResponse | ReadableStream<Uint8Array>> {
     // 分离系统消息和对话消息
     const systemMessage = this.extractSystemMessageText(messages)
     const conversationMessages = messages.filter(m => m.role !== 'system')
@@ -60,7 +65,7 @@ export class AnthropicProvider extends BaseProvider {
         })),
         ...(stream && { stream: true })
       })
-    }, timeoutMs)
+    }, timeoutMs, abortController)
 
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}))

@@ -1,185 +1,10 @@
-# YPrompt 前端项目文档
+# CLAUDE.md
+
+本文件为 Claude Code (claude.ai/code) 在此代码库中工作时提供指导。
 
 ## 项目概述
 
-YPrompt 前端是一个基于 Vue 3 + TypeScript 的提示词生成和管理系统，采用 Composition API 和模块化架构，支持桌面端侧边栏导航和移动端底部导航的响应式设计。
-
-**核心功能**:
-- 🤖 AI 引导式需求收集和提示词生成
-- 📝 提示词质量分析与优化（系统提示词 + 用户提示词）
-- 🎮 提示词测试操练场（规划中）
-- 📚 个人提示词库管理（收藏、标签、版本控制）
-- 🔐 双认证支持：Linux.do OAuth + 本地用户名密码
-- 📱 响应式布局（1024px断点）
-
-## 技术栈
-
-- **框架**: Vue 3.4 + TypeScript 5.3
-- **构建工具**: Vite 5.0
-- **路由**: Vue Router 4.2
-- **状态管理**: Pinia 2.1
-- **UI框架**: Tailwind CSS 3.3
-- **图标**: Lucide Vue Next 0.544
-- **Markdown**: Marked 16.3
-
-## 项目结构
-
-```
-src/
-├── components/                    # Vue 组件层
-│   ├── layout/                   # 布局组件
-│   │   ├── DesktopLayout.vue     # 桌面端布局容器
-│   │   ├── MobileLayout.vue      # 移动端布局容器
-│   │   ├── DesktopSidebar.vue    # 侧边栏导航（可折叠）
-│   │   └── MobileBottomNav.vue   # 底部导航栏
-│   │
-│   ├── modules/                  # 功能模块页面
-│   │   ├── GenerateModule.vue    # 生成模块（主要功能）✅
-│   │   ├── OptimizeModule.vue    # 优化模块 🚧
-│   │   ├── PlaygroundModule.vue  # 操练场模块 🚧
-│   │   └── LibraryModule.vue     # 我的提示词模块 🚧
-│   │
-│   ├── chat/                     # 对话模块
-│   │   ├── composables/          # 对话业务逻辑
-│   │   │   ├── useChatLogic.ts           # 对话核心逻辑
-│   │   │   ├── useChatMessages.ts        # 消息管理
-│   │   │   ├── useChatInput.ts           # 输入处理
-│   │   │   ├── useChatAttachments.ts     # 附件管理
-│   │   │   ├── useChatModel.ts           # 模型选择
-│   │   │   ├── useChatQuickReplies.ts    # 快捷回复
-│   │   │   └── useChatMessageOperations.ts  # 消息操作
-│   │   └── components/           # 对话UI组件
-│   │       ├── ChatHeader.vue
-│   │       ├── ChatMessageList.vue
-│   │       ├── ChatMessage.vue
-│   │       ├── ChatInputArea.vue
-│   │       ├── ChatModelSelector.vue
-│   │       └── ChatQuickReplies.vue
-│   │
-│   ├── preview/                  # 预览模块
-│   │   ├── composables/          # 预览业务逻辑
-│   │   │   ├── usePreviewTabs.ts         # Tab切换
-│   │   │   ├── usePreviewExecution.ts    # 生成执行
-│   │   │   ├── usePreviewClipboard.ts    # 复制功能
-│   │   │   ├── usePreviewListOperations.ts  # 列表操作
-│   │   │   └── usePreviewHelpers.ts      # 辅助函数
-│   │   └── components/           # 预览UI组件
-│   │       ├── common/           # 通用组件
-│   │       │   ├── PreviewHeader.vue
-│   │       │   ├── TabContainer.vue
-│   │       │   ├── TabButton.vue
-│   │       │   ├── EmptyState.vue
-│   │       │   └── LoadingState.vue
-│   │       ├── tabs/             # Tab内容组件
-│   │       │   ├── ReportTab.vue         # 需求报告
-│   │       │   ├── ThinkingTab.vue       # 关键指令
-│   │       │   ├── InitialTab.vue        # 初始提示词
-│   │       │   ├── AdviceTab.vue         # 优化建议
-│   │       │   └── FinalTab.vue          # 最终提示词
-│   │       └── dialogs/
-│   │           └── SavePromptDialog.vue  # 保存对话框
-│   │
-│   ├── settings/                 # 设置模块
-│   │   ├── composables/          # 设置业务逻辑
-│   │   │   ├── useProviderManagement.ts  # 提供商管理
-│   │   │   ├── useModelManagement.ts     # 模型管理
-│   │   │   ├── useModelTesting.ts        # 模型测试
-│   │   │   └── usePromptRules.ts         # 提示词规则
-│   │   └── components/           # 设置UI组件
-│   │       ├── SettingsHeader.vue
-│   │       ├── SettingsButton.vue
-│   │       ├── tabs/
-│   │       │   ├── ProvidersTab.vue      # 提供商配置
-│   │       │   └── PromptsTab.vue        # 提示词规则
-│   │       └── dialogs/
-│   │           ├── ProviderDialog.vue
-│   │           ├── ProviderTypeDialog.vue
-│   │           └── ModelDialog.vue
-│   │
-│   └── modules/library/          # 提示词库模块
-│       └── components/
-│           ├── PromptList.vue            # 提示词列表
-│           ├── PromptDetailModal.vue     # 详情弹窗
-│           ├── VersionHistoryPanel.vue   # 版本历史面板
-│           ├── VersionHistoryContent.vue # 版本历史内容
-│           └── VersionDetailModal.vue    # 版本详情弹窗
-│
-├── stores/                       # Pinia 状态管理
-│   ├── authStore.ts              # 认证状态（登录、用户信息）
-│   ├── promptStore.ts            # 提示词生成状态
-│   ├── settingsStore.ts          # AI配置和应用设置
-│   ├── navigationStore.ts        # 导航状态管理
-│   ├── notificationStore.ts      # 通知状态
-│   └── optimizeStore.ts          # 优化模块状态
-│
-├── services/                     # 业务服务层
-│   ├── aiService.ts              # AI服务统一入口
-│   ├── apiService.ts             # 后端API调用封装
-│   ├── aiGuideService.ts         # AI引导式需求收集
-│   ├── promptGeneratorService.ts # GPrompt四步生成
-│   ├── promptOptimizationService.ts  # 提示词优化服务
-│   ├── versionService.ts         # 版本管理服务
-│   ├── capabilityDetector.ts     # 模型能力检测
-│   │
-│   └── ai/                       # AI服务模块化实现
-│       ├── providers/            # AI提供商实现
-│       │   ├── BaseProvider.ts         # 提供商基类
-│       │   ├── OpenAIProvider.ts       # OpenAI实现
-│       │   ├── AnthropicProvider.ts    # Claude实现
-│       │   ├── GoogleProvider.ts       # Gemini实现
-│       │   └── index.ts
-│       │
-│       ├── streaming/            # 流式处理
-│       │   ├── SSEParser.ts            # SSE解析器
-│       │   ├── StreamProcessor.ts      # 流处理器
-│       │   ├── StreamFilter.ts         # 流过滤器
-│       │   └── index.ts
-│       │
-│       ├── multimodal/           # 多模态转换
-│       │   ├── AttachmentConverter.ts        # 附件转换器
-│       │   ├── OpenAIAttachmentHandler.ts    # OpenAI格式
-│       │   ├── AnthropicAttachmentHandler.ts # Claude格式
-│       │   ├── GoogleAttachmentHandler.ts    # Gemini格式
-│       │   └── index.ts
-│       │
-│       ├── errors/               # 错误处理
-│       │   ├── ErrorParser.ts          # 错误解析
-│       │   ├── AIErrorHandler.ts       # 错误处理器
-│       │   └── index.ts
-│       │
-│       ├── utils/                # 工具函数
-│       │   ├── ModelFetcher.ts         # 模型列表获取
-│       │   ├── ResponseCleaner.ts      # 响应清理
-│       │   ├── apiUrlBuilder.ts        # URL构建
-│       │   └── responseCleaners.ts     # 响应清理规则
-│       │
-│       └── types.ts              # 类型定义
-│
-├── config/                       # 配置文件
-│   ├── prompts.ts                # 提示词配置管理
-│   ├── builtinProviders.ts       # 内置提供商配置
-│   ├── promptGenerator.ts        # 生成器配置
-│   │
-│   └── prompts/                  # 内置提示词规则
-│       ├── index.ts                          # 导出入口
-│       ├── promptOptimization.ts             # 提示词优化
-│       ├── requirementReportRules.ts         # 需求报告生成
-│       ├── thinkingPointsExtraction.ts       # 关键指令提取
-│       ├── finalPromptGenerationRules.ts     # 最终提示词生成
-│       ├── optimizationAdvice.ts             # 优化建议
-│       ├── systemPromptGeneration.ts         # 系统提示词生成
-│       ├── userPromptOptimization.ts         # 用户提示词优化
-│       ├── userPromptQualityAnalysis.ts      # 质量分析
-│       └── ...
-│
-├── utils/                        # 通用工具函数
-│   ├── aiResponseUtils.ts        # AI响应处理
-│   ├── fileUtils.ts              # 文件处理
-│   └── jsonParser.ts             # JSON解析
-│
-└── views/                        # 页面视图（已弃用）
-    └── HomeView.vue              # 使用 modules 替代
-```
+YPrompt 是一个基于 Vue.js 的前端应用程序，用于 AI 驱动的提示词生成和管理。它提供了模块化界面，包含生成、优化、操练场和库等功能区域。该应用使用本地用户名/密码认证配合 JWT token，并通过统一接口支持多个 AI 提供商。
 
 ## 开发命令
 
@@ -187,650 +12,476 @@ src/
 # 安装依赖
 npm install
 
-# 启动开发服务器（http://localhost:5173）
+# 启动开发服务器
 npm run dev
 
-# 构建生产版本
+# 构建生产版本（包含类型检查）
 npm run build
+
+# 仅类型检查（排除 optimize 模块）
+npm run type-check
+
+# 代码检查和修复
+npm run lint
+
+# 使用 Prettier 格式化代码
+npm run format
 
 # 预览生产构建
 npm run preview
 
-# 类型检查
-npm run type-check
+# 测试 AI 提供商配置
+node test_default_provider_model.js
 
-# 代码检查
-npm run lint
-
-# 代码格式化
-npm run format
+# 启用调试模式（无需后端）
+VITE_DEBUG_MODE=true npm run dev
 ```
 
-## 核心功能模块
+## 架构概述
 
-### 1. 生成模块 (GenerateModule.vue)
+### 技术栈
+- **Vue 3.4** 配合 Composition API 和 TypeScript
+- **Vite 5.0** 作为构建工具和开发服务器
+- **Pinia 2.1** 用于状态管理
+- **Vue Router 4.2** 用于路由
+- **Tailwind CSS 3.3** 用于样式
+- **关键库**: Marked (Markdown), DOMPurify (XSS 防护), Highlight.js (语法高亮), ECharts (图表), Mermaid (图表)
+- **无 UI 组件库** - 仅使用自定义组件
 
-**完整的提示词生成功能** ✅
+### 核心架构模式
 
-#### AI 引导式需求收集
-- 智能对话深入挖掘用户需求
-- 自动分析对话历史提取关键信息
-- 生成结构化需求描述报告
-- 支持多模态输入（图片、文档、音频、视频）
+#### 1. 基于模块的导航系统
+应用使用统一的顶部导航方式：
+- **TopNavigation**: 所有布局中一致的导航栏
+- **DesktopLayout** (≥1024px): 带模块按钮的完整水平导航
+- **MobileLayout** (<1024px): 带下拉菜单的汉堡菜单
+- 四个主要模块：生成、优化、操练场、库
 
-#### GPrompt 四步生成流程
-1. **需求报告** - 从对话历史生成结构化需求
-2. **关键指令** - 提取核心思考点
-3. **初始提示词** - 基于关键指令生成初版
-4. **优化建议** - 分析并提供改进方向
-5. **最终提示词** - 应用优化生成最终版本
-
-#### 执行模式
-- **自动模式**: 一键完成全流程
-- **手动模式**: 逐步执行每个阶段，可查看中间结果
-
-**关键文件**:
-- `components/modules/GenerateModule.vue`
-- `components/ChatInterface.vue`
-- `components/PreviewPanel.vue`
-- `services/aiGuideService.ts`
-- `services/promptGeneratorService.ts`
-
-### 2. 优化模块 (OptimizeModule.vue) ✅
-
-**提示词质量分析与优化**
-
-**功能**:
-- ✅ 系统提示词优化（专业的AI指令优化）
-- ✅ 用户提示词优化（快速问答优化）
-- ✅ 质量评分与分析
-- ✅ 实时预览与对比
-- ✅ 保存到个人提示词库
-- ✅ 版本控制与回滚
-
-**关键文件**:
-- `components/modules/OptimizeModule.vue`
-- `components/modules/optimize/` - 优化相关组件
-- `services/promptOptimizationService.ts`
-- `stores/optimizeStore.ts`
-
-### 3. 操练场模块 (PlaygroundModule.vue) 🚧
-
-**提示词实时测试与调试**
-
-**规划功能**:
-- 实时测试提示词效果
-- 参数调节（temperature, top_p等）
-- 性能监控和统计
-- 多模型对比测试
-
-### 4. 我的提示词模块 (LibraryModule.vue) ✅
-
-**个人提示词库管理**
-
-**功能**:
-- ✅ 提示词列表展示（分页、筛选）
-- ✅ 标签分类管理
-- ✅ 收藏功能
-- ✅ 详情弹窗查看
-- ✅ 版本历史查看
-- ✅ 版本回滚
-- ✅ 直接跳转到优化模块
-- 🚧 导入/导出（规划中）
-
-**关键文件**:
-- `components/modules/LibraryModule.vue`
-- `components/modules/library/` - 库相关组件
-- `services/apiService.ts` - API调用
-- `services/versionService.ts` - 版本管理
-
-## 状态管理 (Pinia Stores)
-
-### authStore.ts - 认证状态
-
-**状态**:
-```typescript
-token: string | null           // JWT Token
-user: User | null              // 用户信息
-isLoading: boolean             // 加载状态
-isLoggedIn: computed           // 是否已登录
+#### 2. 分层组件架构
+```
+模块组件 (如 GenerateModule.vue)
+├── ChatInterface (AI 对话)
+├── PreviewPanel (带选项卡的输出显示)
+└── SettingsModal (配置)
 ```
 
-**方法**:
+#### 3. 基于 Composables 的业务逻辑
+每个功能区域使用 composables 进行组织：
+- `src/components/chat/composables/` - 聊天功能、消息处理、附件
+- `src/components/preview/composables/` - 预览选项卡、执行、剪贴板操作
+- `src/components/settings/composables/` - 提供商/模型管理、测试
+
+#### 4. 服务层架构
+- `aiService.ts` - 主要的 AI 服务编排，支持流式响应
+- `aiGuideService.ts` - 需求收集的 AI 引导对话
+- `promptGeneratorService.ts` - GPrompt 四步生成
+- `promptOptimizationService.ts` - 提示词质量优化
+- `apiService.ts` - 后端 API 集成
+- `settingsApi.ts` - 设置管理 API
+
+#### 5. AI 提供商抽象
+支持多个 AI 提供商的可扩展系统：
+- **OpenAI**: GPT-4o, GPT-4o-mini, o1-preview, o1-mini
+- **Anthropic**: Claude Opus 4.1, Claude Sonnet 4.0, Claude 3.5 Sonnet/Haiku
+- **Google**: Gemini 2.0 Flash Lite, Gemini 1.5 Pro/Flash
+- **自定义提供商** 通过配置使用统一 API
+
+### 认证系统
+- **方式**: 本地用户名/密码认证（用户 'admin' 只需密码）
+- **登录表单**: 用户名硬编码为 'admin'，只需输入密码
+- **默认**: admin/admin123（在后端环境变量中配置）
+- **JWT token**: 访问 token 存储在 localStorage（刷新 token 支持存在但未主动使用）
+- **路由保护**: 除 `/login` 外的所有路由都需要认证
+- **预加载**: 在 `main.ts` 中预加载认证存储以防止导航延迟
+- **调试模式**: 仍需要登录但使用 mock API 并接受任何凭据
+
+### 状态管理 (Pinia Stores)
+- `authStore.ts` - 认证状态和用户管理
+- `promptStore.ts` - 提示词生成状态和历史
+- `settingsStore.ts` - AI 提供商和模型配置
+- `navigationStore.ts` - 模块导航状态
+- `optimizeStore.ts` - 优化模块状态
+- `providerStore.ts` - 提供商配置管理
+- `notificationStore.ts` - 全局通知
+
+### 关键文件和目录
+
+#### 配置
+- `vite.config.ts` - 带有 git 提交注入和代理的构建配置
+- `tsconfig.json` - 严格的 TypeScript 设置（排除 optimize 模块）
+- `.env.example` - 环境变量模板
+
+#### 核心服务
+- `src/services/ai/` - 模块化 AI 服务实现
+  - `providers/` - AI 提供商实现（OpenAI, Anthropic, Google）
+  - `streaming/` - SSE 流式支持
+  - `multimodal/` - 文件附件处理
+  - `errors/` - 错误处理和解析
+- `src/stores/` - Pinia stores（7 个不同关注的 stores）
+- `src/components/modules/` - 主要功能模块
+
+#### 路由
+- `/generate` - 主要的提示词生成模块（默认）
+- `/optimize` - 提示词优化模块（从 TS 检查中排除）
+- `/optimize/:id?` - 优化特定提示词
+- `/playground` - 带有 artifact 渲染的测试操练场
+- `/library` - 个人提示词库
+- `/login` - 认证页面
+
+### 构建配置特性
+- **Git 集成**: 自定义 Vite 插件注入 git 提交哈希和日期
+- **API 代理**: 开发时代理到 `http://localhost:8002`（不是 8888）
+- **路径别名**: `@/` 映射到 `src/`
+- **调试模式**: `VITE_DEBUG_MODE=true` 启用 mock API 模式
+
+### 环境设置
+
+#### 必需文件
+1. 复制 `.env.example` 到 `.env.development`:
+   ```bash
+   VITE_API_BASE_URL=http://localhost:8002
+   VITE_LOGIN_USERNAME=admin  # 仅显示（用户名已硬编码）
+   VITE_LOGIN_PASSWORD=admin123  # 仅开发提醒
+   VITE_DEBUG_MODE=           # 设置为 'true' 启用 mock 模式
+   ```
+
+#### 后端要求
+前端期望这些后端环境变量：
+- `LOGIN_USERNAME` - 实际用户名
+- `LOGIN_PASSWORD` - 实际密码
+- `SECRET_KEY` - JWT 签名密钥
+
+### 调试模式
+设置 `VITE_DEBUG_MODE=true` 无需后端运行：
+- 使用存储在 localStorage 中的 mock API 响应
+- 仍需要登录（接受任何凭据）
+- AI 聊天和优化功能被禁用
+- 适用于 GitHub Pages 或静态托管
+- 提示词的完整 CRUD 操作使用本地存储
+
+### 常见开发模式
+
+#### 错误处理
 ```typescript
-loginWithCode(code: string)    // 飞书code登录
-refreshToken()                 // 刷新Token
-fetchUserInfo()                // 获取用户信息
-logout()                       // 登出
-initialize()                   // 初始化认证状态
+// AI 服务错误
+import { AIErrorHandler } from '@/services/ai/errors/AIErrorHandler'
+const friendlyError = AIErrorHandler.parseError(rawError)
 ```
 
-### promptStore.ts - 提示词生成状态
-
-**状态**:
+#### 流式响应
 ```typescript
-promptData: {
-  requirementReport: string    // 需求报告
-  thinkingPoints: string[]     // 关键指令
-  initialPrompt: string        // 初始提示词
-  advice: string[]             // 优化建议
-  finalPrompt: string          // 最终提示词
-}
-conversationHistory: Message[] // 对话历史
-isGenerating: boolean          // 是否生成中
-currentStep: string            // 当前步骤
+// 使用流式解析器
+import { SSEParser } from '@/services/ai/streaming/SSEParser'
+const parser = new SSEParser()
+parser.process(chunk)
 ```
 
-### settingsStore.ts - 设置状态
-
-**状态**:
+#### 状态管理
 ```typescript
-providers: Provider[]          // AI提供商列表
-selectedProviderId: string     // 当前选中提供商
-selectedModelId: string        // 当前选中模型
-promptRules: PromptRules       // 提示词生成规则
-```
-
-### navigationStore.ts - 导航状态
-
-**状态**:
-```typescript
-currentModule: string          // 当前模块
-isSidebarCollapsed: boolean    // 侧边栏是否折叠
-isMobile: boolean              // 是否移动端
-modules: Module[]              // 模块配置
-```
-
-## AI 服务层架构
-
-### 提供商抽象 (Provider Pattern)
-
-所有AI提供商继承 `BaseProvider`:
-
-```typescript
-abstract class BaseProvider {
-  abstract chat(messages, options): AsyncIterable<string>
-  abstract chatWithStructuredOutput(messages, schema): Promise<any>
-  abstract getAvailableModels(): Promise<Model[]>
-  abstract supportsStreaming(): boolean
-  abstract supportsVision(): boolean
-  abstract supportsStructuredOutput(): boolean
+// 带预加载的存储模式
+const store = useAuthStore() // 在 main.ts 中预加载
+if (!store.isLoggedIn) {
+  router.push('/login')
 }
 ```
 
-**支持的提供商**:
-- `OpenAIProvider` - GPT-3.5/GPT-4系列
-- `AnthropicProvider` - Claude系列
-- `GoogleProvider` - Gemini系列
-
-### 流式处理
-
-**SSEParser** - 解析Server-Sent Events:
-```typescript
-parseSSEChunk(chunk: string): SSEEvent[]
-extractContent(event: SSEEvent, provider: string): string | null
-```
-
-**StreamProcessor** - 处理流式输出:
-```typescript
-async *processStream(
-  response: Response, 
-  provider: string
-): AsyncIterable<string>
-```
-
-### 多模态支持
-
-**AttachmentConverter** - 统一附件格式:
-```typescript
-convertAttachment(file: File, provider: string): Promise<Attachment>
-```
-
-**支持的文件类型**:
-- 图片: jpg, jpeg, png, gif, webp
-- 文档: pdf, doc, docx, txt, md
-- 音频: mp3, wav, ogg
-- 视频: mp4, avi, mov
-
-## 后端API集成
-
-### API服务 (apiService.ts)
-
-**认证相关**: (通过 authStore 调用)
-```typescript
-POST /api/auth/login           // 登录
-POST /api/auth/refresh         // 刷新Token
-GET  /api/auth/userinfo        // 获取用户信息
-POST /api/auth/logout          // 登出
-```
-
-**提示词相关**:
-```typescript
-savePrompt(data)               // POST /api/prompts
-getPrompts(params)             // GET /api/prompts
-getPrompt(id)                  // GET /api/prompts/{id}
-updatePrompt(id, data)         // PUT /api/prompts/{id}
-deletePrompt(id)               // DELETE /api/prompts/{id}
-toggleFavorite(id, is_favorite) // POST /api/prompts/{id}/favorite
-recordPromptUse(id)            // POST /api/prompts/{id}/use
-```
-
-**标签相关**:
-```typescript
-getTags()                      // GET /api/tags
-getPopularTags(limit)          // GET /api/tags/popular
-createTag(tag_name)            // POST /api/tags
-deleteTag(id)                  // DELETE /api/tags/{id}
-```
-
-**版本相关**: (通过 versionService.ts)
-```typescript
-createVersion(promptId, data)  // POST /api/versions/{prompt_id}
-getVersions(promptId)          // GET /api/versions/{prompt_id}
-rollbackVersion(promptId, version) // POST /api/versions/{prompt_id}/{version}/rollback
-compareVersions(promptId, v1, v2)  // GET /api/versions/{prompt_id}/compare
-```
-
-## 响应式布局系统
-
-### 布局切换 (1024px断点)
-
-**桌面端** (≥1024px):
-- 左侧侧边栏导航（200px展开 / 60px折叠）
-- 主内容区域自适应
-- Hover展开菜单项
-
-**移动端** (<1024px):
-- 底部固定导航栏（4个主要模块）
-- 全屏内容区域
-- 手势友好的交互
-
-**实现**:
-```typescript
-// navigationStore.ts
-const updateLayoutMode = () => {
-  isMobile.value = window.innerWidth < 1024
-}
-
-window.addEventListener('resize', updateLayoutMode)
-```
-
-## 开发规范
-
-### 组件结构
-
-```
-功能模块/
-├── composables/           # 业务逻辑（Composition API）
-│   ├── useFeatureA.ts    # 单一职责
-│   └── useFeatureB.ts
-└── components/            # UI组件
-    ├── FeatureA.vue      # 展示组件
-    └── FeatureB.vue
-```
-
-### 命名规范
-
-- **组件**: PascalCase (`ChatInterface.vue`)
-- **Composables**: `use` + PascalCase (`useChatMessages.ts`)
-- **Store**: camelCase + `Store` (`promptStore.ts`)
-- **Service**: camelCase + `Service` (`aiService.ts`)
-- **类型**: PascalCase (`interface User {}`)
-
-### 代码组织原则
-
-1. **关注点分离**: 逻辑与视图分离
-2. **单一职责**: 每个composable只负责一个功能
-3. **可复用性**: 通用逻辑抽取为独立模块
-4. **类型安全**: 充分利用TypeScript
-
-### Composable示例
-
-```typescript
-// useChatMessages.ts
-export function useChatMessages() {
-  const messages = ref<Message[]>([])
-  
-  const addMessage = (message: Message) => {
-    messages.value.push(message)
-  }
-  
-  const clearMessages = () => {
-    messages.value = []
-  }
-  
-  return {
-    messages: readonly(messages),
-    addMessage,
-    clearMessages
-  }
-}
-```
-
-## 常见开发任务
-
-### 1. 添加新的功能模块
-
-```bash
-# 1. 创建模块组件
-touch src/components/modules/NewModule.vue
-
-# 2. 在 navigationStore.ts 添加模块配置
-const modules = [
-  // ...existing modules
-  {
-    id: 'new',
-    name: '新模块',
-    path: '/new',
-    icon: 'NewIcon',
-    order: 5
-  }
-]
-
-# 3. 在 main.ts 添加路由
-{
-  path: '/new',
-  name: 'new',
-  component: () => import('./components/modules/NewModule.vue')
-}
-```
-
-### 2. 添加新的AI提供商
-
-```typescript
-// 1. 创建 Provider 类
-// src/services/ai/providers/NewProvider.ts
-export class NewProvider extends BaseProvider {
-  async chat(messages, options) {
-    // 实现chat方法
-  }
-  
-  async getAvailableModels() {
-    // 实现获取模型列表
-  }
-  
-  supportsStreaming() { return true }
-  supportsVision() { return false }
-}
-
-// 2. 在 providers/index.ts 导出
-export { NewProvider } from './NewProvider'
-
-// 3. 在 aiService.ts 注册
-const providerMap = {
-  openai: OpenAIProvider,
-  anthropic: AnthropicProvider,
-  google: GoogleProvider,
-  new: NewProvider  // 添加这行
-}
-```
-
-### 3. 修改提示词生成规则
-
-```typescript
-// 方法1: 直接修改配置文件
-// src/config/prompts/promptOptimization.ts
-export const promptOptimizationRules = `
-你的新规则...
-`
-
-// 方法2: 在设置界面修改（保存到 settingsStore）
-// 设置 > 提示词规则 Tab
-```
-
-### 4. 添加新的Tab到预览面板
-
-```vue
-<!-- 1. 创建Tab组件 -->
-<!-- src/components/preview/components/tabs/NewTab.vue -->
-<template>
-  <div class="new-tab">
-    {{ content }}
-  </div>
-</template>
-
-<!-- 2. 在 PreviewPanel.vue 添加 -->
-<template>
-  <TabContainer>
-    <TabButton @click="activeTab = 'new'">新Tab</TabButton>
-    <!-- ... -->
-  </TabContainer>
-  
-  <NewTab v-if="activeTab === 'new'" :content="data.newContent" />
-</template>
-
-<!-- 3. 在 promptStore.ts 添加字段 -->
-interface PromptData {
-  // ...existing fields
-  newContent: string
-}
-```
-
-### 5. 调试流式输出
-
-```typescript
-// 在 StreamProcessor.ts 添加日志
-async *processStream(response, provider) {
-  for await (const chunk of parseSSEChunk(chunk)) {
-    console.log('[Stream Debug]', chunk) // 添加调试日志
-    const content = extractContent(chunk, provider)
-    if (content) yield content
-  }
-}
-```
-
-## 环境配置
-
-### 内置提供商配置
-
-复制 `builtin-providers.example.json` 为 `builtin-providers.json`:
-
-```json
-{
-  "providers": [
-    {
-      "id": "openai-builtin",
-      "name": "OpenAI (内置)",
-      "type": "openai",
-      "apiKey": "sk-...",
-      "baseURL": "https://api.openai.com/v1",
-      "models": [
-        {
-          "id": "gpt-4",
-          "name": "GPT-4",
-          "contextWindow": 8192,
-          "supportsVision": true
-        }
-      ]
-    },
-    {
-      "id": "anthropic-builtin",
-      "name": "Claude (内置)",
-      "type": "anthropic",
-      "apiKey": "sk-ant-...",
-      "baseURL": "https://api.anthropic.com",
-      "models": [
-        {
-          "id": "claude-3-opus-20240229",
-          "name": "Claude 3 Opus",
-          "contextWindow": 200000,
-          "supportsVision": true
-        }
-      ]
-    }
-  ]
-}
-```
-
-### 环境变量
-
-创建 `.env.local`:
-
-```bash
-# 后端API地址
-VITE_API_BASE_URL=http://localhost:8888
-
-# 飞书OAuth配置（可选，用于本地测试）
-VITE_FEISHU_APP_ID=your_app_id
-```
-
-## 计划改造 - 认证迁移
-
-### 当前实现: 飞书 OAuth
-
-**文件**: `src/stores/authStore.ts`
-
-**流程**:
-1. 获取飞书授权码 (code)
-2. 调用后端 `/api/auth/login`
-3. 后端验证飞书code并返回JWT
-4. 前端保存token和用户信息
-
-### 目标: linux.do OAuth
-
-**需要修改的部分**:
-
-1. **authStore.ts** - OAuth回调处理
-```typescript
-// 当前
-const loginWithCode = async (code: string) => {
-  // 调用后端 /api/auth/login
-}
-
-// 改造后
-const loginWithLinuxDo = async (code: string) => {
-  // 调用后端 /api/auth/linux-do/login
-}
-```
-
-2. **登录页面** - 替换登录按钮
-```vue
-<!-- 当前 -->
-<button @click="loginWithFeishu">飞书登录</button>
-
-<!-- 改造后 -->
-<button @click="loginWithLinuxDo">Linux.do 登录</button>
-```
-
-3. **用户信息字段适配**
-```typescript
-// 根据linux.do返回的用户信息调整User接口
-interface User {
-  id: number
-  linux_do_id: string  // 替代 open_id
-  name: string
-  avatar: string
-  email?: string
-  // 移除飞书特有字段
-}
-```
-
-**注意**: 主要改造在后端，前端只需调整API调用和用户信息字段。
-
-## 性能优化建议
-
-1. **代码分割**:
-   - 路由懒加载 ✅
-   - 组件异步加载（大型组件）
-   
-2. **状态管理**:
-   - 避免不必要的响应式数据
-   - 使用 `shallowRef` 处理大对象
-   
-3. **渲染优化**:
-   - 虚拟滚动（长列表）
-   - `v-memo` 缓存重复渲染
-   
-4. **打包优化**:
-   - Tree-shaking
-   - Gzip压缩
-   - 图片懒加载
-
-## 调试技巧
-
-### Vue DevTools
-
-浏览器安装 Vue DevTools 扩展，可以:
-- 查看组件树和props
-- 检查Pinia store状态
-- 追踪事件
-- 性能分析
-
-### 类型检查
-
-```bash
-# 运行类型检查
-npm run type-check
-
-# 监听模式
-npm run type-check -- --watch
-```
-
-### 网络调试
-
-```typescript
-// 在 aiService.ts 启用调试
-const DEBUG = true
-
-if (DEBUG) {
-  console.log('[AI Request]', messages)
-  console.log('[AI Response]', response)
-}
-```
-
-## 项目特色
-
-1. **模块化架构** - composables + components 分离
-2. **响应式设计** - 桌面端和移动端无缝切换
-3. **多AI支持** - 抽象Provider，易于扩展
-4. **流式输出** - 实时显示AI生成过程
-5. **多模态** - 支持图片、文档、音视频输入
-6. **类型安全** - 完整的TypeScript支持
-
-## 开发建议
-
-1. **优先使用Composition API** - 逻辑复用更灵活
-2. **保持组件职责单一** - 便于维护和测试
-3. **善用TypeScript** - 减少运行时错误
-4. **遵循命名规范** - 提高代码可读性
-5. **编写可复用的composables** - 避免重复代码
+### 安全注意事项
+- **XSS 防护**: 使用 `marked` 库的 `v-html` 渲染 Markdown 内容（无 DOMPurify 清理）
+- **API 密钥**: 永远不要存储在前端代码中 - 通过后端 API 管理配置
+- **认证**: JWT token 存储在 localStorage
+- **输入验证**: 表单基本验证，但用户生成内容需要审查
+- **CORS**: 配置后端允许前端来源
+
+### 测试
+目前未配置测试框架。推荐设置：
+- **Vitest** 用于单元测试
+- **Cypress** 用于端到端测试
+- `test_default_provider_model.js` 用于手动提供商测试
+
+### 性能优化
+- 路由组件的懒加载
+- 认证存储预加载以防止导航延迟
+- 流式响应处理用于实时更新
+- 使用 Pinia 的高效状态管理
+- 大模块中的组件级代码分割
+
+## 快速参考
+
+### 必要文件
+- `src/main.ts` - 路由器、认证设置和存储预加载
+- `src/services/aiService.ts` - 主要的 AI 集成点
+- `src/stores/authStore.ts` - 认证管理
+- `vite.config.ts` - 构建配置和代理设置
+
+### 默认凭据
+- 用户名: `admin`（硬编码，无法更改）
+- 密码: `admin123`（在后端环境变量中配置）
+- 调试模式接受任何密码
+
+### 常见调试步骤
+1. 检查浏览器控制台的认证错误
+2. 验证后端 API 配置中有有效的 AI 提供商配置
+3. 检查网络选项卡的 API 失败（目标：localhost:8002）
+4. 使用 `VITE_DEBUG_MODE=true` 启用调试模式进行 UI 测试
+5. 如果认证状态似乎损坏，清除 localStorage
 
 ## 常见问题
 
-### Q: 如何添加新的对话快捷回复?
+### 认证问题
+- **后端未运行**: 确保后端在端口 8002 上运行
+- **错误凭据**: 用户名始终为 'admin'，检查后端的 LOGIN_PASSWORD
+- **CORS 问题**: 验证后端允许前端来源
+- **Token 过期**: 清除 localStorage 并重新认证
+- **调试模式**: 请记住即使在调试模式下仍需要登录
 
-A: 修改 `useChatQuickReplies.ts`:
-```typescript
-const quickReplies = ref([
-  // 添加新的快捷回复
-  { id: '4', text: '你的新问题', category: 'custom' }
-])
+### AI 提供商问题
+- **无效 API 密钥**: 在后端设置 API 中验证密钥配置
+- **模型不可用**: 检查模型是否启用并被提供商支持
+- **速率限制**: 超过提供商 API 速率限制
+- **网络错误**: 检查互联网连接和 API 状态
+
+### 构建问题
+- **TypeScript 错误**: 运行 `npm run type-check` 识别问题
+- **Optimize 模块**: 设计上从 TypeScript 检查中排除
+- **Git 错误**: 确保 git 仓库已初始化以进行提交注入
+
+## UI 样式
+
 ```
+<role>
+You are an expert frontend engineer, UI/UX designer, visual design specialist, and typography expert. Your goal is to help the user integrate a design system into an existing codebase in a way that is visually consistent, maintainable, and idiomatic to their tech stack.
 
-### Q: 如何自定义Tab样式?
+Before proposing or writing any code, first build a clear mental model of the current system:
+- Identify the tech stack (e.g. React, Next.js, Vue, Tailwind, shadcn/ui, etc.).
+- Understand the existing design tokens (colors, spacing, typography, radii, shadows), global styles, and utility patterns.
+- Review the current component architecture (atoms/molecules/organisms, layout primitives, etc.) and naming conventions.
+- Note any constraints (legacy CSS, design library in use, performance or bundle-size considerations).
 
-A: 修改 `TabButton.vue` 的Tailwind类:
-```vue
-<button class="your-custom-classes">
-  <!-- ... -->
-</button>
+Ask the user focused questions to understand the user's goals. Do they want:
+- a specific component or page redesigned in the new style,
+- existing components refactored to the new system, or
+- new pages/features built entirely in the new style?
+
+Once you understand the context and scope, do the following:
+- Propose a concise implementation plan that follows best practices, prioritizing:
+  - centralizing design tokens,
+  - reusability and composability of components,
+  - minimizing duplication and one-off styles,
+  - long-term maintainability and clear naming.
+- When writing code, match the user’s existing patterns (folder structure, naming, styling approach, and component patterns).
+- Explain your reasoning briefly as you go, so the user understands *why* you’re making certain architectural or design choices.
+
+Always aim to:
+- Preserve or improve accessibility.
+- Maintain visual consistency with the provided design system.
+- Leave the codebase in a cleaner, more coherent state than you found it.
+- Ensure layouts are responsive and usable across devices.
+- Make deliberate, creative design choices (layout, motion, interaction details, and typography) that express the design system’s personality instead of producing a generic or boilerplate UI.
+
+</role>
+
+<design-system>
+# Design Style: Corporate Trust
+
+## 1. Design Philosophy
+This style embodies the **modern enterprise SaaS aesthetic** — professional yet approachable, sophisticated yet friendly. It draws inspiration from tech unicorns and high-growth startups that have successfully humanized the corporate experience. The design rejects the cold, sterile formality of traditional corporate websites in favor of a warm, confident, and inviting presence.
+
+**Core Principles:**
+- **Trustworthy Yet Vibrant**: Establishes credibility through clean structure and professional typography while maintaining visual energy through vibrant gradients and colorful accents
+- **Dimensional Depth**: Uses isometric perspectives, soft colored shadows, and subtle 3D transforms to create visual interest and break free from flat design
+- **Refined Elegance**: Every element is polished with attention to micro-interactions, smooth transitions, and sophisticated hover states
+- **Purposeful Gradients**: Indigo-to-violet gradients serve as the visual signature, used strategically in headlines, buttons, and decorative elements
+- **Professional Polish**: Generous white space, consistent spacing rhythms, and crisp typography create a premium, enterprise-ready feel
+
+**Keywords**: Trustworthy, Vibrant, Polished, Dimensional, Modern, Approachable, Enterprise-Ready, Elegant
+
+**Visual DNA**: The unmistakable signature of this style comes from:
+1. **Colored Shadows**: Soft shadows with blue/purple tints instead of neutral grays
+2. **Isometric Elements**: Subtle 3D transforms (rotate-x, rotate-y) on decorative cards and visualizations
+3. **Gradient Text**: Strategic use of gradient text for emphasis in headlines
+4. **Soft Blobs**: Large, blurred gradient orbs in the background for atmospheric depth
+5. **Elevated Cards**: White cards that lift on hover with enhanced shadows
+6. **Dual-Tone Palette**: Indigo (primary) + Violet (secondary) creating a cohesive gradient spectrum
+
+## 2. Design Token System
+
+### Colors (Light Mode)
+*   **Background**: `#F8FAFC` (Slate 50) - A very subtle cool grey/white base.
+*   **Foreground (Surface)**: `#FFFFFF` (White) - For cards and raised elements.
+*   **Primary**: `#4F46E5` (Indigo 600) - The core brand color. Vibrant blue-purple.
+*   **Secondary**: `#7C3AED` (Violet 600) - For gradients and accents.
+*   **Text Main**: `#0F172A` (Slate 900) - High contrast, sharp.
+*   **Text Muted**: `#64748B` (Slate 500) - For supporting text.
+*   **Accent/Success**: `#10B981` (Emerald 500) - For positive indicators.
+*   **Border**: `#E2E8F0` (Slate 200) - Subtle separation.
+
+### Typography
+*   **Font Family**: `Plus Jakarta Sans` — A geometric sans-serif with friendly rounded terminals that perfectly balances professional authority with modern approachability. Its clean letterforms ensure excellent readability while maintaining visual warmth.
+*   **Scaling**: Major Third (1.250) scale provides substantial hierarchy without overwhelming the layout
+*   **Font Weights**:
+    *   **Display/Headings**: ExtraBold (800) for hero headlines, Bold (700) for section headings
+    *   **Subheadings**: SemiBold (600) for card titles and emphasis
+    *   **Body Text**: Regular (400) for paragraphs, Medium (500) for navigation and labels
+*   **Line Heights**:
+    *   Headlines: 1.1 (tight tracking for impact)
+    *   Body Text: 1.6-1.7 (relaxed for readability)
+*   **Letter Spacing**: Tight tracking (-0.02em) on large headlines for modern polish
+*   **Responsive Type Scale**:
+    *   Mobile: text-2xl to text-4xl for h1
+    *   Desktop: text-4xl to text-6xl for h1
+    *   Progressive scaling ensures legibility across all devices
+
+### Radius & Border
+*   **Radius**: `rounded-xl` (12px) for cards and `rounded-lg` (8px) for inputs. Buttons are `rounded-full` or `rounded-lg`.
+*   **Borders**: Thin, 1px borders using the `Border` token.
+
+### Shadows & Effects
+This is where the design truly shines. **Colored shadows** replace neutral grays to reinforce the brand palette:
+
+*   **Default Card Shadow**: `0 4px 20px -2px rgba(79, 70, 229, 0.1)` — Soft blue-tinted base elevation
+*   **Hover Card Shadow**: `0 10px 25px -5px rgba(79, 70, 229, 0.15), 0 8px 10px -6px rgba(79, 70, 229, 0.1)` — Multi-layer depth on interaction
+*   **Button Shadow**: `0 4px 14px 0 rgba(79, 70, 229, 0.3)` — Strong presence for primary CTAs
+*   **Glow Effects**: Numbered badges use `shadow-[0_0_20px_rgba(79,70,229,0.5)]` for ethereal glow
+*   **Background Blobs**: Large gradient orbs with 3xl blur create atmospheric depth without distraction
+    *   `blur-3xl filter` combined with low opacity (20-50%)
+    *   Positioned absolutely to create layered depth
+*   **Gradients**:
+    *   **Primary Gradient**: `from-indigo-600 to-violet-600` — Used for buttons and active states
+    *   **Text Gradient**: Combined with `bg-clip-text text-transparent` for striking headlines
+    *   **Background Gradients**: Subtle `from-indigo-100 to-violet-100` for container backgrounds
+    *   **Final CTA Background**: `from-indigo-900 to-indigo-950` for dramatic dark section
+
+## 3. Component Stylings
+
+### Buttons
+*   **Primary**: Gradient background (Indigo to Violet). `rounded-full` or `rounded-lg`. White text. Slight shadow. Transition: Lift (`-translate-y-0.5`) and increase shadow on hover.
+*   **Secondary**: White background, Border `E2E8F0`, Text `Slate 700`. Hover: `bg-slate-50` and darker border.
+
+### Cards
+*   **Base**: White background, `rounded-xl`, `border border-slate-100`, `shadow-soft`.
+*   **Behavior**: On hover, slight lift and increased shadow intensity.
+*   **Feature Cards**: May feature an icon in a soft-colored circle (bg-indigo-50 text-indigo-600).
+
+### Inputs
+*   **Style**: `bg-white`, `border-slate-200`, `rounded-lg`.
+*   **Focus**: `ring-2 ring-indigo-500 ring-offset-1` and `border-indigo-500`.
+*   **Label**: `text-sm font-semibold text-slate-700`.
+
+## 4. Non-Generic Bold Choices
+
+The Corporate Trust aesthetic stands out through deliberate, sophisticated design decisions:
+
+### Isometric Depth & 3D Transforms
+*   **Hero Card**: `perspective-[2000px]` parent with `rotate-x-[5deg] rotate-y-[-12deg]` child creates subtle isometric effect
+*   **Hover Transforms**: `hover:rotate-x-[2deg] hover:rotate-y-[-8deg]` — Subtle 3D movement on interaction
+*   **Feature Cards**: Alternating `rotate-y-[6deg]` and `rotate-y-[-6deg]` based on layout position
+*   **Benefit Visualization**: `rotate-x-6 rotate-y-12 transform` on gradient container for dramatic depth
+
+### Strategic Gradient Usage
+*   **Split Headlines**: First 3 words in standard color, remaining words in gradient for visual hierarchy
+*   **Gradient Buttons**: Full background gradient with hover lift (`-translate-y-0.5`)
+*   **Badge Elements**: NEW badge with solid indigo background inside gradient-ringed container
+*   **Final CTA**: White button on dark gradient background creates dramatic contrast
+
+### Atmospheric Background Elements
+*   **Blur Orbs**: Large (400-600px) circular gradients with heavy blur positioned absolutely
+*   **Layered Positioning**: Multiple blobs at different z-indexes create depth
+*   **Subtle Animation**: `animate-pulse duration-[4000ms]` on floating cards for gentle movement
+
+### Elevated Card System
+*   **Default State**: Soft colored shadow with subtle border
+*   **Hover State**: Lift effect (`-translate-y-1`) combined with enhanced shadow
+*   **Transition**: Smooth `duration-200` for professional polish
+*   **Pricing Highlight**: Center card uses `md:scale-105` with special ring styling
+
+### Micro-Interactions
+*   **Arrow Icons**: `transition-transform group-hover:translate-x-1` for directional feedback
+*   **Image Zoom**: `group-hover:scale-105` on blog images with overlay fade-in
+*   **Chevron Rotation**: `group-open:rotate-180` for FAQ accordions
+*   **Button Lift**: Subtle upward movement on hover reinforces clickability
+
+## 5. Spacing & Layout
+*   **Container**: `max-w-7xl` (1280px) provides spacious, enterprise-appropriate width
+*   **Padding**: Responsive padding with `px-4 sm:px-6` pattern for consistent gutters
+*   **Vertical Rhythm**:
+    *   Mobile: `py-16` (64px)
+    *   Tablet: `sm:py-20` (80px)
+    *   Desktop: `lg:py-24` (96px)
+*   **Section Spacing**: Generous white space between sections creates breathing room
+*   **Grid Strategy**:
+    *   Hero: Two-column `lg:grid-cols-2` with text-first approach
+    *   Features: Alternating zig-zag with `lg:flex-row` and `lg:flex-row-reverse`
+    *   Pricing: Three-column `md:grid-cols-3` with center emphasis
+    *   Stats: Four-column `md:grid-cols-4` for metric display
+*   **Responsive Breakpoints**:
+    *   Mobile-first approach with progressive enhancement
+    *   sm: 640px, md: 768px, lg: 1024px, xl: 1280px
+*   **Text Width Constraints**: `max-w-xl` or `max-w-2xl` on paragraphs to maintain 60-75 character line lengths
+
+## 6. Animation & Transitions
+*   **Philosophy**: "Refined Motion" — Smooth, professional, never jarring
+*   **Base Transition**: `transition-all duration-200` for general interactive elements
+*   **Long Transitions**: `duration-500` for image zooms and complex animations
+*   **Hover Effects**:
+    *   Cards: Combine `hover:-translate-y-1` with shadow enhancement
+    *   Buttons: `hover:-translate-y-0.5` for subtle lift
+    *   Icons: `transition-transform group-hover:translate-x-1` for directional cues
+*   **Easing**: Default `ease-out` for natural deceleration
+*   **Pulse Animation**: `animate-pulse duration-[4000ms]` on decorative floating elements for gentle breathing effect
+*   **State Changes**: Smooth color transitions on links and buttons reinforce interactivity
+
+## 7. Iconography
+*   **Library**: `lucide-react` for consistent, modern icon system
+*   **Style**:
+    *   Default stroke width: `2px` (standard)
+    *   Size: `h-4 w-4` for inline icons, `h-5 w-5` or `h-6 w-6` for featured icons
+    *   Joins: Rounded for friendliness
+*   **Color Treatment**:
+    *   **Badge Icons**: Icon in `text-indigo-600` on `bg-indigo-100` container
+    *   **Navigation Icons**: Inherit text color, transition on hover
+    *   **Social Icons**: `text-slate-400 hover:text-indigo-400`
+*   **Icon Containers**:
+    *   Small badges: `h-12 w-12 rounded-xl` with soft background
+    *   Large features: `h-14 w-14 rounded-xl` for prominent sections
+    *   Circular: `rounded-full` for avatars or status indicators
+*   **Accessibility**: Icons are decorative with proper text alternatives or hidden from screen readers when paired with text
+
+## 8. Responsive Strategy
+*   **Mobile-First Philosophy**: Design begins at 375px width, progressively enhances
+*   **Touch Targets**: Minimum 44x44px for all interactive elements (buttons, links)
+*   **Typography Scaling**:
+    *   Headlines reduce from `text-6xl` (desktop) to `text-4xl` (mobile)
+    *   Body text maintains readability at `text-base` with responsive line heights
+*   **Layout Adaptations**:
+    *   Two-column layouts stack to single column on mobile
+    *   Navigation collapses to essential items (login hidden on mobile)
+    *   Pricing cards stack vertically with equal width
+    *   Footer columns stack progressively (4 col → 2 col → 1 col)
+*   **Spacing Compression**: Padding and margins reduce proportionally on smaller screens
+*   **Image Optimization**: Aspect ratios maintained, sizes adapt to container width
+*   **Horizontal Scrolling**: Never required; all content fits viewport width
+*   **Visual Hierarchy Preserved**: Even on mobile, clear distinction between heading levels maintained
+
+## 9. Accessibility & Best Practices
+*   **Color Contrast**: All text meets WCAG AA standards
+    *   Slate 900 on Slate 50 background: AAA compliant
+    *   White text on Indigo 900 background: AAA compliant
+    *   Link colors tested for 4.5:1 minimum ratio
+*   **Focus States**:
+    *   Visible ring on all interactive elements: `focus-visible:ring-2 focus-visible:ring-indigo-500`
+    *   Ring offset for clarity: `focus-visible:ring-offset-2`
+    *   Never remove focus indicators
+*   **Semantic HTML**:
+    *   Proper heading hierarchy (h1 → h2 → h3)
+    *   Native `<button>` elements for interactive actions
+    *   `<nav>` for navigation, `<footer>` for footer
+    *   Details/summary for FAQ accordions
+*   **Image Alt Text**: Descriptive alternatives for all images
+*   **Interactive States**:
+    *   Hover: Visual feedback on all clickable elements
+    *   Active: Subtle state change on click
+    *   Disabled: Reduced opacity with `pointer-events-none`
+*   **Motion Preferences**: Consider `prefers-reduced-motion` for users sensitive to animation
+*   **Screen Reader Support**: Proper ARIA labels where semantic HTML insufficient
+</design-system>
 ```
-
-### Q: 流式输出不工作?
-
-A: 检查:
-1. Provider是否支持流式 (`supportsStreaming()`)
-2. API endpoint是否返回SSE格式
-3. 浏览器控制台Network tab查看响应
-
-## 相关文档
-
-- **根目录文档**: `/CLAUDE.md` - 前后端统一文档
-- **后端文档**: `/backend/CLAUDE.md` - 后端详细文档
-- **Vue 3文档**: https://vuejs.org
-- **Pinia文档**: https://pinia.vuejs.org
-- **Tailwind CSS**: https://tailwindcss.com
-
-## 联系方式
-
-如需帮助或反馈问题，请联系项目维护者。

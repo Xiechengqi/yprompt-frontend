@@ -1,6 +1,6 @@
 import { ref } from 'vue'
 import { usePromptStore } from '@/stores/promptStore'
-import { useSettingsStore } from '@/stores/settingsStore'
+import { useProviderStore } from '@/stores/providerStore'
 import { useNotificationStore } from '@/stores/notificationStore'
 import { PromptGeneratorService } from '@/services/promptGeneratorService'
 import { AIGuideService } from '@/services/aiGuideService'
@@ -8,7 +8,7 @@ import { cleanConvertedResponse } from '@/utils/aiResponseUtils'
 
 export function usePreviewExecution(switchToTabWithScroll: (tab: string) => void, scrollToBottomOfContent: () => void) {
   const promptStore = usePromptStore()
-  const settingsStore = useSettingsStore()
+  const providerStore = useProviderStore()
   const notificationStore = useNotificationStore()
   const isExecuting = ref(false)
   const abortController = ref<AbortController | null>(null)
@@ -23,8 +23,8 @@ export function usePreviewExecution(switchToTabWithScroll: (tab: string) => void
     try {
       isExecuting.value = true
       abortController.value = new AbortController()
-      const provider = settingsStore.getCurrentProvider()
-      const model = settingsStore.getCurrentModel()
+      const provider = providerStore.currentProvider
+      const model = providerStore.currentModel
 
       if (!provider || !model) {
         notificationStore.error('请先配置AI模型')
@@ -193,8 +193,8 @@ export function usePreviewExecution(switchToTabWithScroll: (tab: string) => void
       abortController.value = new AbortController()
       promptStore.currentExecutionStep = 'thinking'
 
-      const provider = settingsStore.getCurrentProvider()
-      const model = settingsStore.getCurrentModel()
+      const provider = providerStore.currentProvider
+      const model = providerStore.currentModel
 
       if (!provider || !model) {
         notificationStore.error('请先配置AI模型')
@@ -264,8 +264,8 @@ export function usePreviewExecution(switchToTabWithScroll: (tab: string) => void
       abortController.value = new AbortController()
       promptStore.currentExecutionStep = 'initial'
 
-      const provider = settingsStore.getCurrentProvider()
-      const model = settingsStore.getCurrentModel()
+      const provider = providerStore.currentProvider
+      const model = providerStore.currentModel
 
       if (!provider || !model) {
         notificationStore.error('请先配置AI模型')
@@ -330,8 +330,8 @@ export function usePreviewExecution(switchToTabWithScroll: (tab: string) => void
       abortController.value = new AbortController()
       promptStore.currentExecutionStep = 'advice'
 
-      const provider = settingsStore.getCurrentProvider()
-      const model = settingsStore.getCurrentModel()
+      const provider = providerStore.currentProvider
+      const model = providerStore.currentModel
 
       if (!provider || !model) {
         notificationStore.error('请先配置AI模型')
@@ -400,8 +400,8 @@ export function usePreviewExecution(switchToTabWithScroll: (tab: string) => void
       abortController.value = new AbortController()
       promptStore.currentExecutionStep = 'final'
 
-      const provider = settingsStore.getCurrentProvider()
-      const model = settingsStore.getCurrentModel()
+      const provider = providerStore.currentProvider
+      const model = providerStore.currentModel
 
       if (!provider || !model) {
         notificationStore.error('请先配置AI模型')
@@ -467,8 +467,8 @@ export function usePreviewExecution(switchToTabWithScroll: (tab: string) => void
       isExecuting.value = true
       promptStore.currentExecutionStep = 'report'
 
-      const provider = settingsStore.getCurrentProvider()
-      const model = settingsStore.getCurrentModel()
+      const provider = providerStore.currentProvider
+      const model = providerStore.currentModel
 
       if (!provider || !model) {
         notificationStore.error('请先配置AI模型')
@@ -526,8 +526,8 @@ export function usePreviewExecution(switchToTabWithScroll: (tab: string) => void
       abortController.value = new AbortController()
       promptStore.currentExecutionStep = 'thinking'
 
-      const provider = settingsStore.getCurrentProvider()
-      const model = settingsStore.getCurrentModel()
+      const provider = providerStore.currentProvider
+      const model = providerStore.currentModel
 
       if (!provider || !model) {
         notificationStore.error('请先配置AI模型')
@@ -598,8 +598,8 @@ export function usePreviewExecution(switchToTabWithScroll: (tab: string) => void
       abortController.value = new AbortController()
       promptStore.currentExecutionStep = 'initial'
 
-      const provider = settingsStore.getCurrentProvider()
-      const model = settingsStore.getCurrentModel()
+      const provider = providerStore.currentProvider
+      const model = providerStore.currentModel
 
       if (!provider || !model) {
         notificationStore.error('请先配置AI模型')
@@ -667,8 +667,8 @@ export function usePreviewExecution(switchToTabWithScroll: (tab: string) => void
       abortController.value = new AbortController()
       promptStore.currentExecutionStep = 'advice'
 
-      const provider = settingsStore.getCurrentProvider()
-      const model = settingsStore.getCurrentModel()
+      const provider = providerStore.currentProvider
+      const model = providerStore.currentModel
 
       if (!provider || !model) {
         notificationStore.error('请先配置AI模型')
@@ -740,8 +740,8 @@ export function usePreviewExecution(switchToTabWithScroll: (tab: string) => void
       abortController.value = new AbortController()
       promptStore.currentExecutionStep = 'final'
 
-      const provider = settingsStore.getCurrentProvider()
-      const model = settingsStore.getCurrentModel()
+      const provider = providerStore.currentProvider
+      const model = providerStore.currentModel
 
       if (!provider || !model) {
         notificationStore.error('请先配置AI模型')

@@ -3,9 +3,7 @@
 
 import { h, ref, onMounted, onUpdated, watch, nextTick, computed, onUnmounted } from 'vue';
 import MindMap from './MindMap.js';
-import mermaid from 'mermaid';
-import * as echarts from 'echarts';
-import * as d3 from 'd3';
+import { loadECharts, loadD3, loadMermaid, isLoading } from '@/utils/chartLazyLoader';
 
 export default {
   name: 'PreviewPanel',
@@ -203,18 +201,32 @@ export default {
                   class="w-full h-full relative overflow-hidden bg-white cursor-grab active:cursor-grabbing"
                   ref="mermaidContainerRef"
                 >
+                   <!-- Loading State -->
+                   <div v-if="isLoadingMermaid" class="absolute inset-0 flex items-center justify-center bg-white z-10">
+                     <div class="flex flex-col items-center gap-3">
+                       <div class="w-8 h-8 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin"></div>
+                       <p class="text-sm text-gray-600">正在加载图表库...</p>
+                     </div>
+                   </div>
                    <div class="absolute top-3 left-3 bg-white/90 backdrop-blur text-slate-500 text-xs px-2.5 py-1.5 rounded-md z-10 border border-slate-200 shadow-sm font-medium flex items-center gap-2">
                       <i data-lucide="move" class="w-3 h-3"></i> Pan & Zoom
                    </div>
-                   <div ref="mermaidRef" class="origin-center p-10"></div>
+                   <div ref="mermaidRef" class="origin-center p-10" :class="{ 'opacity-0': isLoadingMermaid }"></div>
                 </div>
 
                 <!-- ECharts -->
                 <div 
                   v-else-if="artifact && artifact.type === 'echarts'"
-                  class="w-full h-full bg-white overflow-hidden"
+                  class="w-full h-full bg-white overflow-hidden relative"
                 >
-                   <div ref="echartsRef" class="w-full h-full"></div>
+                   <!-- Loading State -->
+                   <div v-if="isLoadingECharts" class="absolute inset-0 flex items-center justify-center bg-white z-10">
+                     <div class="flex flex-col items-center gap-3">
+                       <div class="w-8 h-8 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin"></div>
+                       <p class="text-sm text-gray-600">正在加载图表库...</p>
+                     </div>
+                   </div>
+                   <div ref="echartsRef" class="w-full h-full" :class="{ 'opacity-0': isLoadingECharts }"></div>
                 </div>
 
                 <!-- SVG Container -->
@@ -350,6 +362,15 @@ export default {
     const echartsRef = ref(null);
     const drawioRef = ref(null);
     const reloadKey = ref(0); // Key to force re-rendering
+    
+    // Loading states
+    const isLoadingECharts = ref(false);
+    const isLoadingMermaid = ref(false);
+    
+    // Library instances (will be set after lazy loading)
+    let mermaid = null;
+    let echarts = null;
+    let d3 = null;
     
     // View Modes
     const deviceMode = ref('desktop');
@@ -679,7 +700,26 @@ export default {
     const renderMermaid = async () => {
       if (!mermaidRef.value || !localContent.value) return;
       
-      if (mermaidContainerRef.value) {
+      // Lazy load Mermaid if not loaded
+      if (!mermaid) {
+        isLoadingMermaid.value = true;
+        try {
+          mermaid = await loadMermaid();
+          // Also load D3 for zoom functionality
+          if (!d3) {
+            d3 = await loadD3();
+          }
+        } catch (error) {
+          isLoadingMermaid.value = false;
+          const errMsg = `Failed to load Mermaid: ${error.message}`;
+          addLog('error', errMsg);
+          mermaidRef.value.innerHTML = `<div class="text-red-600 font-mono text-xs p-4 bg-red-50 border border-red-200 rounded">${errMsg}</div>`;
+          return;
+        }
+        isLoadingMermaid.value = false;
+      }
+      
+      if (mermaidContainerRef.value && d3) {
          d3.select(mermaidContainerRef.value).on('.zoom', null);
       }
       
@@ -703,8 +743,13 @@ export default {
       }
     };
 
-    const initMermaidZoom = () => {
+    const initMermaidZoom = async () => {
         if (!mermaidContainerRef.value || !mermaidRef.value) return;
+        
+        // Ensure D3 is loaded
+        if (!d3) {
+          d3 = await loadD3();
+        }
         
         const svgElement = mermaidRef.value.querySelector('svg');
         if (!svgElement) return;
@@ -723,8 +768,24 @@ export default {
         d3.select(mermaidContainerRef.value).call(zoom.transform, d3.zoomIdentity.translate(20, 20).scale(1));
     };
 
-    const renderECharts = () => {
+    const renderECharts = async () => {
       if (!echartsRef.value || !localContent.value) return;
+      
+      // Lazy load ECharts if not loaded
+      if (!echarts) {
+        isLoadingECharts.value = true;
+        try {
+          echarts = await loadECharts();
+        } catch (error) {
+          isLoadingECharts.value = false;
+          const errMsg = `Failed to load ECharts: ${error.message}`;
+          addLog('error', errMsg);
+          echartsRef.value.innerHTML = `<div class="text-red-600 font-mono text-xs p-4 bg-red-50 border border-red-200 rounded flex items-center justify-center h-full">${errMsg}</div>`;
+          return;
+        }
+        isLoadingECharts.value = false;
+      }
+      
       if (chartInstance) chartInstance.dispose();
       chartInstance = echarts.init(echartsRef.value);
       
@@ -1242,6 +1303,8 @@ export default {
         deviceMode, toggleFullscreen, isFullscreen, downloadArtifact,
         mermaidLook, toggleMermaidLook,
         reloadPreview, reloadKey,
+        // Loading states
+        isLoadingECharts, isLoadingMermaid,
         // Console
         isConsoleOpen, consoleLogs, consoleErrorCount, consoleScrollRef, handleComponentError
     };

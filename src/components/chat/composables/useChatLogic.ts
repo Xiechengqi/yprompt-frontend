@@ -1,6 +1,6 @@
 import { computed, watch } from 'vue'
 import { usePromptStore } from '@/stores/promptStore'
-import { useSettingsStore } from '@/stores/settingsStore'
+import { useProviderStore } from '@/stores/providerStore'
 import { useNotificationStore } from '@/stores/notificationStore'
 import { AIGuideService } from '@/services/aiGuideService'
 import { AIService } from '@/services/aiService'
@@ -9,7 +9,7 @@ import { getPromptGeneratorConfig } from '@/config/promptGenerator'
 import { cleanAIResponse, checkAIDecision } from '@/utils/aiResponseUtils'
 
 export function useChatLogic(
-  chatMessages: { 
+  chatMessages: {
     startStreamingMessage: () => number
     updateStreamingMessage: (content: string) => void
     simulateTyping: (message: string, isStreaming: boolean) => Promise<void>
@@ -18,7 +18,6 @@ export function useChatLogic(
   chatModel: {
     getCurrentChatModel: () => any
     isStreamMode: { value: boolean }
-    showModelSelector: { value: boolean }
   },
   chatInput: {
     clearInput: () => void
@@ -34,23 +33,17 @@ export function useChatLogic(
 ) {
   const config = getPromptGeneratorConfig()
   const promptStore = usePromptStore()
-  const settingsStore = useSettingsStore()
+  const providerStore = useProviderStore()
   const notificationStore = useNotificationStore()
   const aiGuideService = AIGuideService.getInstance()
+
+  const isAbortError = (error: unknown) => {
+    return (error instanceof DOMException && error.name === 'AbortError') || (error as any)?.name === 'AbortError'
+  }
 
   const chatContainerMaxHeight = computed(() => {
     // 基础高度：约345px
     let baseCalculation = 345
-    
-    let modelSelectorExtraHeight = 0
-    
-    if (chatModel.showModelSelector.value) {
-      if (typeof window !== 'undefined' && window.innerWidth >= 640) {
-        modelSelectorExtraHeight = 110
-      } else {
-        modelSelectorExtraHeight = 120
-      }
-    }
     
     // 计算附件区域额外高度
     // 总计约 115px
@@ -58,8 +51,8 @@ export function useChatLogic(
     if (chatAttachments.currentAttachments.value.length > 0) {
       attachmentExtraHeight = 115
     }
-    
-    const totalReduction = baseCalculation + modelSelectorExtraHeight + attachmentExtraHeight
+
+    const totalReduction = baseCalculation + attachmentExtraHeight
     return `calc(100vh - ${totalReduction}px)`
   })
 
@@ -113,11 +106,11 @@ export function useChatLogic(
     chatQuickReplies.showQuickReplies.value = false
     
     if (isForceGenerate) {
-      await chatMessages.simulateTyping('好的，我将立即为您生成需求报告。', false)
-      
+      await chatMessages.simulateTyping('好的,我将立即为您生成需求报告。', false)
+
       setTimeout(async () => {
-        const globalProvider = settingsStore.getCurrentProvider()
-        const globalModel = settingsStore.getCurrentModel()
+        const globalProvider = providerStore.currentProvider
+        const globalModel = providerStore.currentModel
         if (globalProvider && globalModel) {
           await generatePrompt(globalProvider, globalModel.id)
         }
@@ -126,6 +119,7 @@ export function useChatLogic(
     }
 
     promptStore.isTyping = true
+    promptStore.isGenerating = true
 
     try {
       const useStreamMode = chatModel.isStreamMode.value
@@ -176,8 +170,8 @@ export function useChatLogic(
         
         if (shouldEndConversation || aiResponse.includes('基于我们的对话，我现在为您生成需求报告：')) {
           setTimeout(async () => {
-            const globalProvider = settingsStore.getCurrentProvider()
-            const globalModel = settingsStore.getCurrentModel()
+            const globalProvider = providerStore.currentProvider
+            const globalModel = providerStore.currentModel
             if (globalProvider && globalModel) {
               await generatePrompt(globalProvider, globalModel.id)
             }
@@ -203,10 +197,10 @@ export function useChatLogic(
         if (shouldEndConversation || aiResponse.includes('基于我们的对话，我现在为您生成需求报告：')) {
           const cleanResponse = cleanAIResponse(aiResponse)
           await chatMessages.simulateTyping(cleanResponse, false)
-          
+
           setTimeout(async () => {
-            const globalProvider = settingsStore.getCurrentProvider()
-            const globalModel = settingsStore.getCurrentModel()
+            const globalProvider = providerStore.currentProvider
+            const globalModel = providerStore.currentModel
             if (globalProvider && globalModel) {
               await generatePrompt(globalProvider, globalModel.id)
             }
@@ -216,12 +210,21 @@ export function useChatLogic(
           await chatMessages.simulateTyping(cleanResponse, false)
         }
       }
-    } catch (error: unknown) {
+      } catch (error: unknown) {
       promptStore.isTyping = false
       promptStore.isGenerating = false
+
+      if (isAbortError(error)) {
+        if (chatModel.isStreamMode.value) {
+          const aiService = AIService.getInstance()
+          aiService.clearStreamUpdateCallback()
+        }
+        return
+      }
+
       const errorMessage = error instanceof Error ? error.message : String(error)
       notificationStore.error(`发生错误: ${errorMessage}`)
-      
+
       if (chatModel.isStreamMode.value) {
         const aiService = AIService.getInstance()
         aiService.clearStreamUpdateCallback()
@@ -254,11 +257,11 @@ export function useChatLogic(
         conversationHistory,
         provider,
         modelId,
-        settingsStore.streamMode ? onReportStreamUpdate : undefined
+        providerStore.streamMode ? onReportStreamUpdate : undefined
       )
-      
+
       // 只在非流式模式下覆盖内容（流式模式已通过回调更新）
-      if (!settingsStore.streamMode) {
+      if (!providerStore.streamMode) {
         promptStore.promptData.requirementReport = requirementReport
       }
       promptStore.showPreview = true
@@ -286,11 +289,11 @@ export function useChatLogic(
           'zh',
           [],
           provider,
-          settingsStore.streamMode ? onStep1Update : undefined
+          providerStore.streamMode ? onStep1Update : undefined
         )
         
         // 只在非流式模式下覆盖内容
-        if (!settingsStore.streamMode) {
+        if (!providerStore.streamMode) {
           promptStore.promptData.thinkingPoints = thinkingPoints
         }
         
@@ -309,11 +312,11 @@ export function useChatLogic(
           [],
           promptStore.promptData.thinkingPoints || thinkingPoints,
           provider,
-          settingsStore.streamMode ? onStep2Update : undefined
+          providerStore.streamMode ? onStep2Update : undefined
         )
         
         // 只在非流式模式下覆盖内容
-        if (!settingsStore.streamMode) {
+        if (!providerStore.streamMode) {
           promptStore.promptData.initialPrompt = initialPrompt
         }
         
@@ -336,11 +339,11 @@ export function useChatLogic(
           'zh',
           [],
           provider,
-          settingsStore.streamMode ? onStep3Update : undefined
+          providerStore.streamMode ? onStep3Update : undefined
         )
         
         // 只在非流式模式下覆盖内容
-        if (!settingsStore.streamMode) {
+        if (!providerStore.streamMode) {
           promptStore.promptData.advice = advice
         }
         
@@ -360,11 +363,11 @@ export function useChatLogic(
           'zh',
           [],
           provider,
-          settingsStore.streamMode ? onStep4Update : undefined
+          providerStore.streamMode ? onStep4Update : undefined
         )
         
         // 只在非流式模式下覆盖内容
-        if (!settingsStore.streamMode) {
+        if (!providerStore.streamMode) {
           promptStore.promptData.generatedPrompt = finalPrompt
         }
         promptStore.addOrUpdateProgressMessage('✅ 已为您生成高质量的AI提示词！右侧可查看完整的生成过程和最终结果。', 'progress')
@@ -379,7 +382,12 @@ export function useChatLogic(
     } catch (error: unknown) {
       promptStore.isGenerating = false
       promptStore.currentExecutionStep = null
-      
+
+      if (isAbortError(error)) {
+        notificationStore.info('生成已中断')
+        return
+      }
+
       const errorMessage = error instanceof Error ? error.message : String(error)
       notificationStore.error(`提示词生成失败: ${errorMessage}。请检查网络连接和API配置后重试`)
     }
@@ -451,9 +459,18 @@ export function useChatLogic(
       
     } catch (error: unknown) {
       promptStore.isTyping = false
+
+      if (isAbortError(error)) {
+        if (chatModel.isStreamMode.value) {
+          const aiService = AIService.getInstance()
+          aiService.clearStreamUpdateCallback()
+        }
+        return
+      }
+
       const errorMessage = error instanceof Error ? error.message : String(error)
       notificationStore.error(`重新生成失败: ${errorMessage}`)
-      
+
       if (chatModel.isStreamMode.value) {
         const aiService = AIService.getInstance()
         aiService.clearStreamUpdateCallback()
@@ -524,8 +541,8 @@ export function useChatLogic(
         
         if (shouldEndConversation || aiResponse.includes('基于我们的对话，我现在为您生成需求报告：')) {
           setTimeout(async () => {
-            const globalProvider = settingsStore.getCurrentProvider()
-            const globalModel = settingsStore.getCurrentModel()
+            const globalProvider = providerStore.currentProvider
+            const globalModel = providerStore.currentModel
             if (globalProvider && globalModel) {
               await generatePrompt(globalProvider, globalModel.id)
             }
@@ -551,10 +568,10 @@ export function useChatLogic(
         if (shouldEndConversation || aiResponse.includes('基于我们的对话，我现在为您生成需求报告：')) {
           const cleanResponse = cleanAIResponse(aiResponse)
           await chatMessages.simulateTyping(cleanResponse, false)
-          
+
           setTimeout(async () => {
-            const globalProvider = settingsStore.getCurrentProvider()
-            const globalModel = settingsStore.getCurrentModel()
+            const globalProvider = providerStore.currentProvider
+            const globalModel = providerStore.currentModel
             if (globalProvider && globalModel) {
               await generatePrompt(globalProvider, globalModel.id)
             }
@@ -567,14 +584,30 @@ export function useChatLogic(
     } catch (error: unknown) {
       promptStore.isTyping = false
       promptStore.isGenerating = false
+
+      if (isAbortError(error)) {
+        if (chatModel.isStreamMode.value) {
+          const aiService = AIService.getInstance()
+          aiService.clearStreamUpdateCallback()
+        }
+        return
+      }
+
       const errorMessage = error instanceof Error ? error.message : String(error)
       notificationStore.error(`重新发送失败: ${errorMessage}`)
-      
+
       if (chatModel.isStreamMode.value) {
         const aiService = AIService.getInstance()
         aiService.clearStreamUpdateCallback()
       }
     }
+  }
+
+  const interruptGeneration = () => {
+    aiGuideService.interruptCurrentRequest()
+    promptStore.isTyping = false
+    promptStore.isGenerating = false
+    promptStore.currentExecutionStep = null
   }
 
   return {
@@ -584,6 +617,7 @@ export function useChatLogic(
     sendMessage,
     generatePrompt,
     regenerateMessage,
-    resendUserMessage
+    resendUserMessage,
+    interruptGeneration
   }
 }

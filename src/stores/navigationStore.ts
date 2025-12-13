@@ -14,8 +14,6 @@ export interface ModuleConfig {
 export const useNavigationStore = defineStore('navigation', () => {
   // 状态
   const currentModule = ref<ModuleType>('generate')
-  const sidebarCollapsed = ref(false)
-  const isMobile = ref(false)
 
   // 模块配置
   const modules: ModuleConfig[] = [
@@ -42,7 +40,7 @@ export const useNavigationStore = defineStore('navigation', () => {
     },
     {
       id: 'library',
-      name: '我的',
+      name: '模板库',
       icon: '📚',
       path: '/library',
       color: '#8B5CF6'
@@ -54,25 +52,9 @@ export const useNavigationStore = defineStore('navigation', () => {
     return modules.find(m => m.id === currentModule.value) || modules[0]
   })
 
-  const sidebarWidth = computed(() => {
-    return sidebarCollapsed.value ? '60px' : '140px'
-  })
-
   // 方法
   const setCurrentModule = (module: ModuleType) => {
     currentModule.value = module
-  }
-
-  const toggleSidebar = () => {
-    sidebarCollapsed.value = !sidebarCollapsed.value
-  }
-
-  const setMobile = (mobile: boolean) => {
-    isMobile.value = mobile
-    // 移动端默认折叠侧边栏
-    if (mobile) {
-      sidebarCollapsed.value = true
-    }
   }
 
   const getModuleByPath = (path: string): ModuleConfig | undefined => {
@@ -82,18 +64,13 @@ export const useNavigationStore = defineStore('navigation', () => {
   return {
     // 状态
     currentModule,
-    sidebarCollapsed,
-    isMobile,
     modules,
     
     // 计算属性
     currentModuleConfig,
-    sidebarWidth,
     
     // 方法
     setCurrentModule,
-    toggleSidebar,
-    setMobile,
     getModuleByPath
   }
 })

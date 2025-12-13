@@ -1,6 +1,6 @@
 import { AIService } from './aiService'
-import type { ProviderConfig } from '@/stores/settingsStore'
-import { useSettingsStore } from '@/stores/settingsStore'
+import type { ProviderConfig } from '@/stores/providerStore'
+import { useProviderStore } from '@/stores/providerStore'
 import { promptConfigManager } from '@/config/prompts'
 
 export class PromptGeneratorService {
@@ -41,10 +41,10 @@ For example, if a variable is \`{{user_topic}}\`, you might include a sentence l
     `
   }
 
-  // 获取流式模式设置（与settingsStore保持同步）
+  // 获取流式模式设置（与providerStore保持同步）
   private getStreamMode(): boolean {
-    const settingsStore = useSettingsStore()
-    return settingsStore.streamMode
+    const providerStore = useProviderStore()
+    return providerStore.streamMode
   }
 
   // 获取系统提示词关键指令

@@ -79,7 +79,7 @@
     </div>
     
     <div 
-      v-show="!isMobile || !isEditing"
+      v-show="!isEditing"
       class="relative border border-gray-300 rounded-2xl focus-within:outline-none focus-within:border-gray-300 overflow-hidden" 
       style="height: 120px;"
     >
@@ -136,7 +136,6 @@ import { ArrowUp, Paperclip, X } from 'lucide-vue-next'
 import type { MessageAttachment } from '@/stores/promptStore'
 
 const props = defineProps<{
-  isMobile?: boolean
   isEditing: boolean
   userInput: string
   attachments: MessageAttachment[]

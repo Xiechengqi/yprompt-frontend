@@ -17,9 +17,9 @@ export default {
   },
   emits: ['open-system-prompt'],
   template: `
-    <div class="h-full flex flex-col">
-      <div class="flex flex-col xl:flex-row gap-4 flex-1 min-h-0">
-        <div class="w-full xl:w-[420px] xl:max-w-[460px] flex-shrink-0 flex flex-col min-h-[300px]">
+    <div class="w-full h-full flex flex-col">
+      <div class="flex flex-row gap-4 flex-1 min-h-0">
+        <div class="flex-1 min-h-[300px]">
           <PlaygroundChatPanel
             :messages="messages"
             :is-streaming="isStreaming"

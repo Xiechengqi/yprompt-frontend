@@ -1,6 +1,6 @@
 import { AIService } from './aiService'
 import type { ChatMessage } from './aiService'
-import type { ProviderConfig } from '@/stores/settingsStore'
+import type { ProviderConfig } from '@/stores/providerStore'
 import type { MessageAttachment } from '@/stores/promptStore'
 import { promptConfigManager } from '@/config/prompts'
 
@@ -27,6 +27,10 @@ export class AIGuideService {
       AIGuideService.instance = new AIGuideService()
     }
     return AIGuideService.instance
+  }
+
+  public interruptCurrentRequest() {
+    this.aiService.abortCurrentRequest()
   }
 
   public async generateSimpleResponse(

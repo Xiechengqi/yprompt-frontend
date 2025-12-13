@@ -1,6 +1,6 @@
 // @ts-nocheck
 import { AIService } from './aiService'
-import { useSettingsStore } from '@/stores/settingsStore'
+import { useProviderStore } from '@/stores/providerStore'
 import PROMPT_OPTIMIZATION_CONFIG from '@/config/prompts/promptOptimization'
 import type { Suggestion, PromptAnalysis, ModelTestConfig, TestResult } from '@/stores/optimizeStore'
 
@@ -27,9 +27,9 @@ export class PromptOptimizationService {
    * 分析提示词质量
    */
   async analyzePrompt(prompt: string, type: 'system' | 'user'): Promise<PromptAnalysis> {
-    const settingsStore = useSettingsStore()
-    const currentProvider = settingsStore.getCurrentProvider()
-    const currentModel = settingsStore.getCurrentModel()
+    const providerStore = useProviderStore()
+    const currentProvider = providerStore.currentProvider
+    const currentModel = providerStore.currentModel
 
     const messages = [
       {
@@ -73,9 +73,9 @@ export class PromptOptimizationService {
     systemPrompt: string,
     userPrompt: string
   ): Promise<Suggestion[]> {
-    const settingsStore = useSettingsStore()
-    const currentProvider = settingsStore.getCurrentProvider()
-    const currentModel = settingsStore.getCurrentModel()
+    const providerStore = useProviderStore()
+    const currentProvider = providerStore.currentProvider
+    const currentModel = providerStore.currentModel
     const allSuggestions: Suggestion[] = []
 
     // 并行生成系统和用户提示词的建议
@@ -165,9 +165,9 @@ export class PromptOptimizationService {
     suggestions: Suggestion[],
     _promptType: 'system' | 'user'
   ): Promise<string> {
-    const settingsStore = useSettingsStore()
-    const currentProvider = settingsStore.getCurrentProvider()
-    const currentModel = settingsStore.getCurrentModel()
+    const providerStore = useProviderStore()
+    const currentProvider = providerStore.currentProvider
+    const currentModel = providerStore.currentModel
 
     const messages = [
       {
@@ -287,9 +287,9 @@ export class PromptOptimizationService {
    * 快速优化（单步骤优化）
    */
   async quickOptimize(prompt: string, _type: 'system' | 'user'): Promise<string> {
-    const settingsStore = useSettingsStore()
-    const currentProvider = settingsStore.getCurrentProvider()
-    const currentModel = settingsStore.getCurrentModel()
+    const providerStore = useProviderStore()
+    const currentProvider = providerStore.currentProvider
+    const currentModel = providerStore.currentModel
 
     const messages = [
       {

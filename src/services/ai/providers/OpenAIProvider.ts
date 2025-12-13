@@ -15,7 +15,12 @@ export class OpenAIProvider extends BaseProvider {
    * @param params API 调用参数
    * @returns Promise<AIResponse | ReadableStream<Uint8Array>>
    */
-  async callAPI(messages: ChatMessage[], stream: boolean, params?: APICallParams): Promise<AIResponse | ReadableStream<Uint8Array>> {
+  async callAPI(
+    messages: ChatMessage[],
+    stream: boolean,
+    params?: APICallParams,
+    abortController?: AbortController
+  ): Promise<AIResponse | ReadableStream<Uint8Array>> {
     // 构建OpenAI API URL - 智能处理基础URL和完整URL
     if (!this.config.baseUrl) {
       throw new Error('API URL 未配置')
@@ -69,7 +74,7 @@ export class OpenAIProvider extends BaseProvider {
         ...(params?.presencePenalty !== undefined && { presence_penalty: params.presencePenalty }),
         ...(stream && { stream: true })
       })
-    }, timeoutMs)
+      }, timeoutMs, abortController)
 
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}))

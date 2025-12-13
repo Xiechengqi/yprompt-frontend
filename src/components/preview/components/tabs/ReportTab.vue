@@ -27,7 +27,7 @@
         :value="requirementReport"
         @input="$emit('update:requirementReport', ($event.target as HTMLTextAreaElement).value)"
         :placeholder="hasConversationData ? '基于对话生成的需求描述...' : '请直接描述您的需求，例如：我需要一个专业的代码审查助手，能够分析代码质量、发现潜在问题并提供改进建议...'"
-        class="w-full flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-gray-300 focus:ring-0 resize-none"
+        class="w-full flex-1 px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:border-gray-300 focus:ring-0 resize-none"
       ></textarea>
       
       <div class="mt-4 flex justify-end flex-shrink-0">

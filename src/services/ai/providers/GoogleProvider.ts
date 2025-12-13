@@ -15,7 +15,12 @@ export class GoogleProvider extends BaseProvider {
    * @param params API 调用参数
    * @returns Promise<AIResponse | ReadableStream<Uint8Array>>
    */
-  async callAPI(messages: ChatMessage[], stream: boolean, params?: APICallParams): Promise<AIResponse | ReadableStream<Uint8Array>> {
+  async callAPI(
+    messages: ChatMessage[],
+    stream: boolean,
+    params?: APICallParams,
+    abortController?: AbortController
+  ): Promise<AIResponse | ReadableStream<Uint8Array>> {
     
     // Google Gemini API格式转换
     const systemMessage = this.extractSystemMessageText(messages)
@@ -99,7 +104,7 @@ export class GoogleProvider extends BaseProvider {
         'x-goog-api-key': this.config.apiKey  // 使用官方文档推荐的header
       },
       body: JSON.stringify(requestBody)
-    }, timeoutMs)
+    }, timeoutMs, abortController)
 
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}))

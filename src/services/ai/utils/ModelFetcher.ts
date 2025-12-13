@@ -1,4 +1,4 @@
-import type { ProviderConfig } from '@/stores/settingsStore'
+import type { ProviderConfig } from '@/stores/providerStore'
 
 export class ModelFetcher {
   private static async fetchWithTimeout(url: string, options: RequestInit, timeoutMs: number = 30000): Promise<Response> {

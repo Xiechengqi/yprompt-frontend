@@ -1,51 +1,12 @@
 <template>
-  <div class="h-full flex flex-col overflow-hidden p-2">
-    <!-- 模块特定顶栏 -->
-    <div class="bg-white rounded-lg shadow-sm p-4 mb-4 flex-shrink-0">
-      <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-        <div class="min-w-0">
-          <h1 class="text-xl lg:text-2xl font-bold text-gray-800 mb-1">提示词优化</h1>
+  <div class="w-full h-full flex flex-col overflow-hidden p-2">
+      <!-- 模块特定顶栏 -->
+      <div class="bg-white rounded-lg shadow-sm p-4 mb-4 flex-shrink-0">
+        <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+          <div class="min-w-0">
+            <h2 class="text-xl lg:text-2xl font-bold text-gray-800 mb-1">提示词优化</h2>
+          </div>
         </div>
-        
-        <!-- 模型选择器和设置按钮 -->
-        <div class="flex items-center gap-2 flex-shrink-0 flex-wrap sm:flex-nowrap">
-          <!-- 模型选择器 -->
-          <div class="flex items-center gap-2 flex-wrap sm:flex-nowrap">
-            <label class="text-sm font-medium text-gray-700 whitespace-nowrap">AI模型:</label>
-            <select
-              v-model="settingsStore.selectedProvider"
-              @change="onProviderChange"
-              class="px-3 py-1 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-blue-500 min-w-0 flex-1 sm:flex-none"
-            >
-              <option value="">选择提供商</option>
-              <option
-                v-for="provider in availableProviders"
-                :key="provider.id"
-                :value="provider.id"
-              >
-                {{ provider.name }}
-              </option>
-            </select>
-            
-            <select
-              v-model="settingsStore.selectedModel"
-              @change="settingsStore.saveSettings"
-              :disabled="!settingsStore.selectedProvider"
-              class="px-3 py-1 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-blue-500 disabled:opacity-50 min-w-0 flex-1 sm:flex-none"
-            >
-              <option value="">选择模型</option>
-              <option
-                v-for="model in availableModels"
-                :key="model.id"
-                :value="model.id"
-              >
-                {{ model.name }}
-              </option>
-            </select>
-          </div>
-          
-          </div>
-      </div>
       
       <!-- 优化模式选择 -->
       <div class="flex space-x-2 mt-4">
@@ -66,8 +27,8 @@
     </div>
 
     <!-- 主要内容区域 -->
-    <div class="flex-1 overflow-hidden">
-      <OptimizeSectionRedesign 
+    <div class="flex-1 min-h-0 overflow-hidden">
+      <OptimizeSectionRedesign
         :active-mode="activeMode"
         @update:active-mode="activeMode = $event"
       />
@@ -87,23 +48,22 @@
     </div>
   </div>
 
-  <!-- 统一设置弹窗 -->
-  <SettingsModal />
-</template>
+  </template>
 
 <script setup lang="ts">
 // @ts-nocheck
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { useSettingsStore } from '@/stores/settingsStore'
+import { useProviderStore } from '@/stores/providerStore'
 import { useOptimizeStore } from '@/stores/optimizeStore'
 import { AIService } from '@/services/aiService'
 import OptimizeSectionRedesign from './optimize/components/OptimizeSectionRedesign.vue'
 import DiffViewer from './optimize/components/DiffViewer.vue'
-import SettingsModal from '@/components/settings/SettingsModal.vue'
 
 const route = useRoute()
 const settingsStore = useSettingsStore()
+const providerStore = useProviderStore()
 const optimizeStore = useOptimizeStore()
 const aiService = AIService.getInstance()
 
@@ -138,8 +98,6 @@ if (!route.params.id) {
 
 // 计算属性
 const isDesktop = computed(() => windowWidth.value >= 1200)
-const availableProviders = computed(() => settingsStore.getAvailableProviders())
-const availableModels = computed(() => settingsStore.getAvailableModels(settingsStore.selectedProvider))
 
 const optimizationModes = [
   { key: 'system', label: '系统提示词优化' },
@@ -160,12 +118,6 @@ const handleModeChange = (mode: 'system' | 'user' | 'compare') => {
 
 const handleOptimize = () => {
   switchTab('optimize')
-}
-
-const onProviderChange = () => {
-  settingsStore.selectedModel = ''
-  // 模型列表会在computed属性中自动更新
-  settingsStore.saveSettings()
 }
 
 // 监听窗口大小变化
@@ -237,7 +189,9 @@ const loadPromptFromLibrary = async (promptId: number) => {
     }
   } catch (error: any) {
     console.error('加载提示词失败:', error)
-    alert(`加载失败: ${error.message}`)
+    const { useNotificationStore } = await import('@/stores/notificationStore')
+    const notificationStore = useNotificationStore()
+    notificationStore.error(`加载失败: ${error.message}`, 3000)
   } finally {
     isLoadingPrompt.value = false
   }
@@ -254,6 +208,7 @@ onMounted(() => {
   window.addEventListener('resize', handleResize)
   // 初始化设置和模型列表
   settingsStore.loadSettings()
+  providerStore.initialize()
   
   // 监听对比触发标志 - 持续监听
   const checkCompareTrigg = setInterval(() => {
@@ -292,18 +247,6 @@ onUnmounted(() => {
 /* 响应式断点 */
 @media (min-width: 1200px) {
   .desktop-layout {
-    display: flex;
-  }
-  .mobile-layout {
-    display: none;
-  }
-}
-
-@media (max-width: 1199px) {
-  .desktop-layout {
-    display: none;
-  }
-  .mobile-layout {
     display: flex;
   }
 }

@@ -167,6 +167,9 @@
 
 <script setup lang="ts">
 import { ref, watch } from 'vue'
+import { useNotificationStore } from '@/stores/notificationStore'
+
+const notificationStore = useNotificationStore()
 
 const props = defineProps<{
   isOpen: boolean
@@ -329,7 +332,7 @@ const handleSave = () => {
   if (!formData.value.title.trim()) return
   // 如果没有promptContent，则需要content
   if (!props.promptContent && !formData.value.content.trim()) {
-    alert('请输入提示词内容')
+    notificationStore.warning('请输入提示词内容', 2000)
     return
   }
   emit('save', {

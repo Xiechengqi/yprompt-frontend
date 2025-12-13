@@ -6,23 +6,13 @@
   <ComparisonPanel v-else-if="activeMode === 'compare'" />
 
   <!-- 系统提示词优化模式 -->
-  <div v-else-if="activeMode === 'system'" class="h-full min-h-0 overflow-hidden" :class="navigationStore.isMobile ? 'flex flex-col' : 'grid grid-cols-2 gap-4'">
-    <!-- PC端左侧/移动端折叠标题栏：输入区 -->
-    <div 
-      v-if="navigationStore.isMobile && !inputExpanded"
-      @click="toggleInput"
-      class="bg-white rounded-lg shadow-sm p-3 flex items-center justify-between cursor-pointer hover:bg-gray-50 transition-colors flex-shrink-0 mb-2"
-    >
-      <h3 class="font-semibold text-gray-800">系统提示词输入</h3>
-      <ChevronDown class="w-5 h-5 text-gray-500" />
-    </div>
-    
-    <!-- 输入区内容 -->
-    <div v-if="!navigationStore.isMobile || inputExpanded" class="flex flex-col min-h-0" :class="navigationStore.isMobile ? 'flex-1 mb-2' : ''">
+  <div v-else-if="activeMode === 'system'" class="w-full h-full min-h-0 overflow-hidden flex flex-row gap-4">
+    <!-- 输入区 -->
+    <div class="flex flex-col flex-1 min-h-0">
       <div class="bg-white rounded-lg shadow-sm flex flex-col h-full p-4 min-h-0 overflow-hidden">
         <div class="mb-4 flex-shrink-0 flex items-center justify-between">
           <div>
-            <h3 class="text-base font-semibold text-gray-800 mb-2">系统提示词</h3>
+            <h4 class="text-base font-semibold text-gray-800 mb-2">系统提示词</h4>
           </div>
           <button
             @click="handleSystemRestart"
@@ -67,22 +57,13 @@
       </div>
     </div>
 
-    <!-- 移动端折叠标题栏：优化预览 -->
-    <div 
-      v-if="navigationStore.isMobile && !previewExpanded"
-      @click="togglePreview"
-      class="bg-white rounded-lg shadow-sm p-3 flex items-center justify-between cursor-pointer hover:bg-gray-50 transition-colors flex-shrink-0"
-    >
-      <h3 class="font-semibold text-gray-800">优化预览</h3>
-      <ChevronDown class="w-5 h-5 text-gray-500" />
-    </div>
-    
-    <!-- PC端右侧/移动端展开内容：优化预览 -->
-    <div v-if="!navigationStore.isMobile || previewExpanded" class="flex flex-col min-h-0" :class="navigationStore.isMobile ? 'flex-1 mb-2' : ''">
+
+    <!-- 预览区 -->
+    <div class="flex flex-col flex-1 min-h-0">
       <div class="bg-white rounded-lg shadow-sm flex flex-col h-full min-h-0 overflow-hidden">
         <!-- 预览头部 - 添加自动/手动切换 -->
         <div class="p-4 border-b border-gray-200 flex items-center justify-between flex-shrink-0">
-          <h2 class="font-semibold text-gray-800">优化预览</h2>
+          <h4 class="font-semibold text-gray-800">优化预览</h4>
           <div class="flex items-center space-x-3">
             <div class="flex items-center space-x-2">
               <label class="flex items-center cursor-pointer">
@@ -217,7 +198,6 @@
           <AdviceTab
             v-if="activeOptimizeTab === 'advice'"
             :advice="optimizeSuggestionsText"
-            :is-mobile="false"
             :is-auto-mode="isAutoMode"
             :is-executing="isGeneratingSystem"
             :is-generating="isGeneratingSystem"
@@ -273,7 +253,6 @@ import { ref, computed, watch, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { useOptimizeStore } from '@/stores/optimizeStore'
 import { useSettingsStore } from '@/stores/settingsStore'
-import { useNavigationStore } from '@/stores/navigationStore'
 import { useNotificationStore } from '@/stores/notificationStore'
 import { copyToClipboard as copyUtil } from '@/utils/clipboardUtils'
 import { AIService } from '@/services/aiService'
@@ -309,7 +288,6 @@ const emit = defineEmits<Emits>()
 
 const optimizeStore = useOptimizeStore()
 const settingsStore = useSettingsStore()
-const navigationStore = useNavigationStore()
 const notificationStore = useNotificationStore()
 const aiService = AIService.getInstance()
 const promptGenerator = PromptGeneratorService.getInstance()
@@ -320,35 +298,6 @@ const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || ''
 // 自动/手动模式
 const isAutoMode = ref(true)
 
-// 移动端折叠状态管理
-const inputExpanded = ref(true)  // 默认展开输入区
-const previewExpanded = ref(false)  // 默认折叠预览区
-
-// 切换输入区
-const toggleInput = () => {
-  if (navigationStore.isMobile) {
-    if (inputExpanded.value) {
-      inputExpanded.value = false
-      previewExpanded.value = true
-    } else {
-      inputExpanded.value = true
-      previewExpanded.value = false
-    }
-  }
-}
-
-// 切换预览区
-const togglePreview = () => {
-  if (navigationStore.isMobile) {
-    if (previewExpanded.value) {
-      previewExpanded.value = false
-      inputExpanded.value = true
-    } else {
-      previewExpanded.value = true
-      inputExpanded.value = false
-    }
-  }
-}
 
 // chatCompletion包装方法，为优化模块提供简单的API
 const chatCompletion = async (options: {
@@ -696,10 +645,6 @@ const handleSystemOptimize = async () => {
   if (!localSystemPrompt?.value || !localSystemPrompt.value.trim()) return
   
   // 移动端模式下，切换到预览区
-  if (navigationStore.isMobile) {
-    inputExpanded.value = false
-    previewExpanded.value = true
-  }
   
   originalSystemPrompt.value = localSystemPrompt.value
   isGeneratingSystem.value = true

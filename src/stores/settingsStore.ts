@@ -1,7 +1,6 @@
 import { defineStore } from 'pinia'
 import { ref, watch } from 'vue'
 import { promptConfigManager } from '@/config/prompts'
-import { getBuiltinProviders, convertBuiltinToProviderConfig } from '@/config/builtinProviders'
 
 export interface ModelConfig {
   id: string
@@ -79,8 +78,18 @@ export const useSettingsStore = defineStore('settings', () => {
   const selectedProvider = ref<string>('')
   const selectedModel = ref<string>('')
   const streamMode = ref(true) // 默认开启流式模式
-  const deletedBuiltinProviders = ref<string[]>([]) // 记录被删除的内置提供商ID
   const useSlimRules = ref(false) // 是否使用精简版提示词规则，默认为false（使用完整版）
+  const isSyncingToProviderStore = ref(false) // 防止循环同步的标志
+
+  // 全局模型参数（应用到所有模型）
+  const globalModelParams = ref<ModelParams>({
+    temperature: 1.0,
+    maxTokens: 8192,
+    topP: 0.95,
+    frequencyPenalty: 0,
+    presencePenalty: 0,
+    topK: 0
+  })
 
   // 提示词编辑相关状态
   const showPromptEditor = ref(false)
@@ -106,25 +115,8 @@ export const useSettingsStore = defineStore('settings', () => {
 
   // 初始化默认配置
   const initializeDefaults = () => {
-    // 加载内置提供商配置
-    const builtinProviders = getBuiltinProviders()
-    if (builtinProviders.length > 0) {
-      const builtinProviderConfigs = builtinProviders.map(convertBuiltinToProviderConfig)
-      providers.value = [...builtinProviderConfigs]
-      
-      // 自动选择第一个可用的提供商和模型
-      const availableProviders = getAvailableProviders()
-      if (availableProviders.length > 0) {
-        selectedProvider.value = availableProviders[0].id
-        const availableModels = getAvailableModels(selectedProvider.value)
-        if (availableModels.length > 0) {
-          selectedModel.value = availableModels[0].id
-        }
-      }
-    } else {
-      // 如果没有内置提供商，保持空数组
-      providers.value = []
-    }
+    // 从后端 API 加载配置（通过 loadSettings）
+    providers.value = []
   }
 
   // 获取预设的提供商模板
@@ -170,11 +162,6 @@ export const useSettingsStore = defineStore('settings', () => {
     return templates[type]
   }
 
-  // 检查是否为内置提供商
-  const isBuiltinProvider = (providerId: string) => {
-    return providerId.startsWith('builtin_')
-  }
-
   // 获取可用的提供商
   const getAvailableProviders = () => {
     return providers.value.filter(p => p.enabled && p.apiKey.trim() !== '')
@@ -188,13 +175,34 @@ export const useSettingsStore = defineStore('settings', () => {
 
   // 获取当前选中的提供商配置
   const getCurrentProvider = () => {
-    return providers.value.find(p => p.id === selectedProvider.value)
+    console.log(`[settingsStore.getCurrentProvider] selectedProvider=${selectedProvider.value}, providers数量=${providers.value.length}`)
+    const provider = providers.value.find(p => p.id === selectedProvider.value)
+    if (!provider) {
+      console.log(`[settingsStore.getCurrentProvider] 没有找到提供商 ${selectedProvider.value}`)
+      console.log(`[settingsStore.getCurrentProvider] 可用提供商:`, providers.value.map(p => p.id))
+    } else {
+      console.log(`[settingsStore.getCurrentProvider] 找到提供商: ${provider.id}`)
+    }
+    return provider
   }
 
   // 获取当前选中的模型配置
   const getCurrentModel = () => {
+    console.log(`[settingsStore.getCurrentModel] selectedProvider=${selectedProvider.value}, selectedModel=${selectedModel.value}`)
     const provider = getCurrentProvider()
-    return provider ? provider.models.find(m => m.id === selectedModel.value) : null
+    if (!provider) {
+      console.log(`[settingsStore.getCurrentModel] 没有找到提供商`)
+      return null
+    }
+    console.log(`[settingsStore.getCurrentModel] 找到提供商: ${provider.id}, 模型数量: ${provider.models.length}`)
+    const model = provider.models.find(m => m.id === selectedModel.value)
+    if (!model) {
+      console.log(`[settingsStore.getCurrentModel] 没有找到模型 ${selectedModel.value}`)
+      console.log(`[settingsStore.getCurrentModel] 可用模型:`, provider.models.map(m => m.id))
+    } else {
+      console.log(`[settingsStore.getCurrentModel] 找到模型: ${model.id}`)
+    }
+    return model
   }
 
   // 添加新的提供商
@@ -234,67 +242,116 @@ export const useSettingsStore = defineStore('settings', () => {
   }
 
   // 保存设置到本地存储
-  const saveSettings = () => {
-    // 只保存用户自定义的提供商，不保存内置提供商
-    const userProviders = providers.value.filter(provider => !provider.id.startsWith('builtin_'))
-    localStorage.setItem('yprompt_providers', JSON.stringify(userProviders))
+  const saveSettings = async () => {
+    console.log('[settingsStore] 开始保存设置...')
+
+    // 保存到后端 API
+    try {
+      const { saveSettings: saveSettingsApi } = await import('@/services/settingsApi')
+      await saveSettingsApi({
+        providers: providers.value
+      })
+      console.log('[settingsStore] 已保存到后端 API')
+    } catch (error) {
+      console.error('[settingsStore] 保存到后端失败，保存到localStorage:', error)
+      // 如果后端保存失败，保存到 localStorage（向后兼容）
+      localStorage.setItem('yprompt_providers', JSON.stringify(providers.value))
+    }
+    
+    // 保存用户选择到 localStorage
+    localStorage.setItem('yprompt_providers', JSON.stringify(providers.value))
     localStorage.setItem('yprompt_selected_provider', selectedProvider.value)
     localStorage.setItem('yprompt_selected_model', selectedModel.value)
     localStorage.setItem('yprompt_stream_mode', JSON.stringify(streamMode.value))
-    // 保存被删除的内置提供商列表
-    localStorage.setItem('yprompt_deleted_builtin_providers', JSON.stringify(deletedBuiltinProviders.value))
     // 保存精简版规则开关
     localStorage.setItem('yprompt_use_slim_rules', JSON.stringify(useSlimRules.value))
+
+    // 保存全局模型参数（应用到所有模型）
+    console.log('[settingsStore] 全局模型参数:', globalModelParams.value)
+    localStorage.setItem('yprompt_global_model_params', JSON.stringify(globalModelParams.value))
+
+    // 同步到 providerStore
+    syncSelectionToProviderStore()
+
+    console.log('[settingsStore] 设置保存完成')
+  }
+
+  // 同步选择到 providerStore
+  const syncSelectionToProviderStore = () => {
+    // 如果正在同步中，跳过以避免循环
+    if (isSyncingToProviderStore.value) {
+      console.log(`[settingsStore] 跳过同步到 providerStore（正在同步中）`)
+      return
+    }
+
+    console.log(`[settingsStore] 同步选择到 providerStore: provider=${selectedProvider.value}, model=${selectedModel.value}`)
+
+    isSyncingToProviderStore.value = true
+
+    // 动态导入以避免循环依赖
+    import('@/stores/providerStore').then(({ useProviderStore }) => {
+      const providerStore = useProviderStore()
+      console.log(`[settingsStore] 设置 providerStore: provider=${selectedProvider.value}, model=${selectedModel.value}`)
+      providerStore.selectedProviderId = selectedProvider.value
+      providerStore.selectedModelId = selectedModel.value
+    }).catch(error => {
+      console.warn('[settingsStore] 同步到 providerStore 失败:', error)
+    }).finally(() => {
+      // 延迟重置标志，确保不会立即再次触发
+      setTimeout(() => {
+        isSyncingToProviderStore.value = false
+      }, 100)
+    })
   }
 
   // 从本地存储加载设置
   const loadSettings = async () => {
-    const savedProviders = localStorage.getItem('yprompt_providers')
+    console.log('[settingsStore] 开始加载设置...')
+
+    // 从后端 API 加载配置
+    try {
+      const { getSettings } = await import('@/services/settingsApi')
+      const settings = await getSettings()
+      providers.value = settings.providers as ProviderConfig[]
+    } catch (error) {
+      console.error('[settingsStore] 从后端加载配置失败:', error)
+      // 如果后端加载失败，尝试从 localStorage 加载（向后兼容）
+      const savedProviders = localStorage.getItem('yprompt_providers')
+      if (savedProviders) {
+        try {
+          const userProviders = JSON.parse(savedProviders)
+          if (Array.isArray(userProviders)) {
+            providers.value = userProviders
+          }
+        } catch (e) {
+          console.error('[settingsStore] 从localStorage加载配置失败:', e)
+        }
+      }
+    }
+
     const savedProvider = localStorage.getItem('yprompt_selected_provider')
     const savedModel = localStorage.getItem('yprompt_selected_model')
     const savedStreamMode = localStorage.getItem('yprompt_stream_mode')
-    const savedDeletedBuiltinProviders = localStorage.getItem('yprompt_deleted_builtin_providers')
     const savedUseSlimRules = localStorage.getItem('yprompt_use_slim_rules')
 
-    // 加载被删除的内置提供商列表
-    if (savedDeletedBuiltinProviders) {
+    console.log('[settingsStore] 从localStorage加载:')
+    console.log('- yprompt_selected_provider:', savedProvider)
+    console.log('- yprompt_selected_model:', savedModel)
+
+    // 加载全局模型参数（应用到所有模型）
+    const savedGlobalParams = localStorage.getItem('yprompt_global_model_params')
+    if (savedGlobalParams) {
       try {
-        deletedBuiltinProviders.value = JSON.parse(savedDeletedBuiltinProviders)
+        console.log('[settingsStore] 加载全局模型参数...')
+        const params = JSON.parse(savedGlobalParams)
+        globalModelParams.value = { ...globalModelParams.value, ...params }
+        console.log('[settingsStore] 全局模型参数加载完成:', globalModelParams.value)
       } catch (error) {
-        deletedBuiltinProviders.value = []
+        console.error('加载全局模型参数失败:', error)
       }
+    } else {
+      console.log('[settingsStore] 没有保存的全局模型参数，使用默认值')
     }
-
-    // 首先加载内置提供商（排除被删除的）
-    const builtinProviders = getBuiltinProviders()
-    let allProviders: ProviderConfig[] = []
-    
-    if (builtinProviders.length > 0) {
-      const builtinProviderConfigs = builtinProviders
-        .map(convertBuiltinToProviderConfig)
-        .filter(provider => !deletedBuiltinProviders.value.includes(provider.id))
-      allProviders = [...builtinProviderConfigs]
-      
-      if (deletedBuiltinProviders.value.length > 0) {
-      }
-    }
-
-    // 合并用户自定义的提供商配置
-    if (savedProviders) {
-      try {
-        const userProviders = JSON.parse(savedProviders)
-        if (Array.isArray(userProviders)) {
-          // 过滤掉与内置提供商ID冲突的用户配置
-          const nonBuiltinProviders = userProviders.filter((provider: ProviderConfig) => 
-            !provider.id.startsWith('builtin_')
-          )
-          allProviders = [...allProviders, ...nonBuiltinProviders]
-        }
-      } catch (error) {
-      }
-    }
-
-    providers.value = allProviders
 
     if (savedStreamMode) {
       try {
@@ -359,6 +416,9 @@ export const useSettingsStore = defineStore('settings', () => {
     } catch (error) {
       console.error('从云端加载提示词规则失败:', error)
     }
+
+    // 加载完成后同步到 providerStore
+    syncSelectionToProviderStore()
   }
 
   // 删除提供商
@@ -366,13 +426,6 @@ export const useSettingsStore = defineStore('settings', () => {
     const index = providers.value.findIndex(p => p.id === providerId)
     if (index > -1) {
       providers.value.splice(index, 1)
-      
-      // 如果删除的是内置提供商，记录到删除列表中
-      if (providerId.startsWith('builtin_')) {
-        if (!deletedBuiltinProviders.value.includes(providerId)) {
-          deletedBuiltinProviders.value.push(providerId)
-        }
-      }
       
       // 如果删除的是当前选中的提供商，重置选择
       if (selectedProvider.value === providerId) {
@@ -390,7 +443,7 @@ export const useSettingsStore = defineStore('settings', () => {
         }
       }
       
-      // 立即保存设置，确保删除记录被持久化
+      // 立即保存设置到后端
       saveSettings()
     }
   }
@@ -731,19 +784,6 @@ export const useSettingsStore = defineStore('settings', () => {
     }
   }
 
-  // 恢复被删除的内置提供商
-  const restoreDeletedBuiltinProviders = () => {
-    if (deletedBuiltinProviders.value.length === 0) {
-      return
-    }
-
-    deletedBuiltinProviders.value = []
-    saveSettings()
-    
-    // 重新加载设置以恢复内置提供商
-    loadSettings()
-    
-  }
 
 
   const getCurrentRequirementReportRules = () => {
@@ -764,8 +804,8 @@ export const useSettingsStore = defineStore('settings', () => {
     selectedProvider,
     selectedModel,
     streamMode,
-    deletedBuiltinProviders,
     useSlimRules,
+    globalModelParams,  // 全局模型参数
     // 提示词编辑状态
     showPromptEditor,
     editingPromptType,
@@ -778,7 +818,6 @@ export const useSettingsStore = defineStore('settings', () => {
     // 原有方法
     initializeDefaults,
     getProviderTemplate,
-    isBuiltinProvider,
     getAvailableProviders,
     getAvailableModels,
     getCurrentProvider,
@@ -789,7 +828,6 @@ export const useSettingsStore = defineStore('settings', () => {
     deleteModel,
     saveSettings,
     loadSettings,
-    restoreDeletedBuiltinProviders,
     // 提示词编辑方法
     loadPromptRules,
     openPromptEditor,

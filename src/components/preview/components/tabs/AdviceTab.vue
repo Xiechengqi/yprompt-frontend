@@ -21,8 +21,8 @@
         </button>
       </div>
     </div>
-    <div class="bg-white flex flex-col" :class="isMobile ? 'flex-1 min-h-0' : 'p-3 flex-1'">
-      <div ref="scrollContainer" class="space-y-2 overflow-y-auto flex-1" :class="isMobile ? 'p-3' : ''" :style="isMobile ? '' : 'max-height: calc(100vh - 400px);'">
+    <div class="bg-white flex flex-col p-3 flex-1">
+      <div ref="scrollContainer" class="space-y-2 overflow-y-auto flex-1" style="max-height: calc(100vh - 400px);">
         <div 
           v-for="(item, index) in advice" 
           :key="index"
@@ -33,7 +33,7 @@
             :value="item"
             @input="$emit('update-item', index, ($event.target as HTMLInputElement).value)"
             @focus="($event.target as HTMLInputElement).setSelectionRange(($event.target as HTMLInputElement).value.length, ($event.target as HTMLInputElement).value.length)"
-            class="flex-1 px-3 py-1 border border-gray-300 rounded focus:ring-2 focus:ring-yellow-500 focus:border-transparent"
+            class="flex-1 px-3 py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-yellow-500 focus:border-transparent"
           />
           <button
             @click="$emit('remove-item', index)"
@@ -45,7 +45,7 @@
         </div>
       </div>
       
-      <div class="pt-4 flex justify-between flex-shrink-0 border-t border-gray-100" :class="isMobile ? 'p-3 bg-white' : 'mt-4'">
+      <div class="pt-4 flex justify-between flex-shrink-0 border-t border-gray-100 mt-4">
         <button
           @click="$emit('add-item')"
           class="px-3 py-1 text-yellow-600 hover:text-yellow-800 text-sm"
@@ -75,7 +75,6 @@ import { useAutoScroll } from '../../composables/useAutoScroll'
 
 const props = defineProps<{
   advice: string[]
-  isMobile?: boolean
   isAutoMode: boolean
   isExecuting: boolean
   isGenerating: boolean

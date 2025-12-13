@@ -1,17 +1,7 @@
 <template>
-  <div class="h-full min-h-0 overflow-hidden" :class="navigationStore.isMobile ? 'flex flex-col' : 'grid grid-cols-2 gap-4'">
-    <!-- 移动端折叠标题栏：输入区 -->
-    <div 
-      v-if="navigationStore.isMobile && !inputExpanded"
-      @click="toggleInput"
-      class="bg-white rounded-lg shadow-sm p-3 flex items-center justify-between cursor-pointer hover:bg-gray-50 transition-colors flex-shrink-0 mb-2"
-    >
-      <h3 class="font-semibold text-gray-800">构建对话上下文</h3>
-      <ChevronDown class="w-5 h-5 text-gray-500" />
-    </div>
-
-    <!-- PC端左侧/移动端展开内容：输入区 -->
-    <div v-if="!navigationStore.isMobile || inputExpanded" class="flex flex-col min-h-0" :class="navigationStore.isMobile ? 'flex-1 mb-2' : ''">
+  <div class="h-full min-h-0 overflow-hidden grid grid-cols-2 gap-4">
+    <!-- 输入区 -->
+    <div class="flex flex-col min-h-0">
       <QuickOptimizeInput
         v-model="optimizeState.state.draftPrompt"
         v-model:system-prompt="optimizeState.state.systemPrompt"
@@ -22,22 +12,12 @@
       />
     </div>
 
-    <!-- 移动端折叠标题栏：优化结果 -->
-    <div 
-      v-if="navigationStore.isMobile && !previewExpanded"
-      @click="togglePreview"
-      class="bg-white rounded-lg shadow-sm p-3 flex items-center justify-between cursor-pointer hover:bg-gray-50 transition-colors flex-shrink-0"
-    >
-      <h3 class="font-semibold text-gray-800">优化结果</h3>
-      <ChevronDown class="w-5 h-5 text-gray-500" />
-    </div>
-
-    <!-- PC端右侧/移动端展开内容：结果区 -->
-    <div v-if="!navigationStore.isMobile || previewExpanded" class="flex flex-col min-h-0" :class="navigationStore.isMobile ? 'flex-1' : ''">
+    <!-- 结果区 -->
+    <div class="flex flex-col min-h-0">
       <div class="bg-white rounded-lg shadow-sm flex flex-col h-full min-h-0 overflow-hidden">
         <!-- 预览头部 -->
         <div class="p-4 border-b border-gray-200 flex items-center justify-between flex-shrink-0">
-          <h2 class="font-semibold text-gray-800">优化预览</h2>
+          <h4 class="font-semibold text-gray-800">优化预览</h4>
           <div class="flex items-center space-x-2">
             <label class="flex items-center cursor-pointer">
               <input
@@ -252,22 +232,18 @@
 
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
-import { Sparkles, ChevronDown, Copy, Check, RefreshCw, ArrowLeftRight } from 'lucide-vue-next'
+import { Sparkles, Copy, Check, RefreshCw, ArrowLeftRight } from 'lucide-vue-next'
 import { useUserPromptQuickOptimize } from '../../composables/useUserPromptQuickOptimize'
 import { useNotificationStore } from '@/stores/notificationStore'
-import { useNavigationStore } from '@/stores/navigationStore'
 import QuickOptimizeInput from './QuickOptimizeInput.vue'
 import SaveUserPromptDialog from '../dialogs/SaveUserPromptDialog.vue'
 
 const optimizeState = useUserPromptQuickOptimize()
 const notificationStore = useNotificationStore()
-const navigationStore = useNavigationStore()
 
 const ACTIVE_TAB_KEY = 'yprompt_user_optimize_active_tab'
 
 const activeTab = ref<'analysis' | 'result'>('analysis')
-const inputExpanded = ref(true)
-const previewExpanded = ref(false)
 const copied = ref(false)
 const saving = ref(false)
 const editablePrompt = ref('')
@@ -298,29 +274,11 @@ const optimizationStage = computed(() => {
   return 0
 })
 
-const toggleInput = () => {
-  if (navigationStore.isMobile) {
-    inputExpanded.value = true
-    previewExpanded.value = false
-  }
-}
-
-const togglePreview = () => {
-  if (navigationStore.isMobile) {
-    inputExpanded.value = false
-    previewExpanded.value = true
-  }
-}
-
 const handleOptimize = async () => {
   // 根据质量分析开关设置初始tab
   const newTab = optimizeState.state.enableQualityAnalysis ? 'analysis' : 'result'
   activeTab.value = newTab
   localStorage.setItem(ACTIVE_TAB_KEY, newTab)
-  if (navigationStore.isMobile) {
-    inputExpanded.value = false
-    previewExpanded.value = true
-  }
   await optimizeState.quickOptimize()
 }
 
@@ -328,10 +286,6 @@ const handleRegenerate = async () => {
   // 直接切换到结果Tab（因为不需要重新分析）
   activeTab.value = 'result'
   localStorage.setItem(ACTIVE_TAB_KEY, 'result')
-  if (navigationStore.isMobile) {
-    inputExpanded.value = false
-    previewExpanded.value = true
-  }
   await optimizeState.regenerateOptimization()
 }
 
@@ -530,11 +484,6 @@ const loadUserPromptFromLibrary = () => {
       // 清除localStorage，避免重复加载
       localStorage.removeItem('yprompt_optimize_loaded_user_prompt')
       
-      // 切换到输入区
-      if (navigationStore.isMobile) {
-        inputExpanded.value = true
-        previewExpanded.value = false
-      }
     }
   } catch (e) {
     console.error('加载用户提示词失败:', e)

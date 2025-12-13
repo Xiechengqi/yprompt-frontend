@@ -58,9 +58,15 @@ export function usePromptRules() {
       }
       settingsStore.saveSettings()
       settingsStore.showSettings = false
+      // 显示成功提示
+      const { useNotificationStore } = await import('@/stores/notificationStore')
+      const notificationStore = useNotificationStore()
+      notificationStore.success('设置保存成功', 2000)
     } catch (error) {
       console.error('保存设置失败:', error)
-      alert('保存失败，请检查网络连接后重试')
+      const { useNotificationStore } = await import('@/stores/notificationStore')
+      const notificationStore = useNotificationStore()
+      notificationStore.error('保存失败，请检查网络连接后重试', 3000)
     }
   }
 

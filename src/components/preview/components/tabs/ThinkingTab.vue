@@ -21,8 +21,8 @@
         </button>
       </div>
     </div>
-    <div class="bg-white flex flex-col" :class="isMobile ? 'flex-1 min-h-0' : 'p-3 flex-1'">
-      <div ref="scrollContainer" class="space-y-2 overflow-y-auto flex-1" :class="isMobile ? 'p-3' : ''" :style="isMobile ? '' : 'max-height: calc(100vh - 400px);'">
+    <div class="bg-white flex flex-col p-3 flex-1">
+      <div ref="scrollContainer" class="space-y-2 overflow-y-auto flex-1" style="max-height: calc(100vh - 400px);">
         <div 
           v-for="(point, index) in thinkingPoints" 
           :key="index"
@@ -33,7 +33,7 @@
             :value="point"
             @input="$emit('update-point', index, ($event.target as HTMLInputElement).value)"
             @focus="($event.target as HTMLInputElement).setSelectionRange(($event.target as HTMLInputElement).value.length, ($event.target as HTMLInputElement).value.length)"
-            class="flex-1 px-3 py-1 border border-gray-300 rounded focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+            class="flex-1 px-3 py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-purple-500 focus:border-transparent"
           />
           <button
             @click="$emit('remove-point', index)"
@@ -75,7 +75,6 @@ import { useAutoScroll } from '../../composables/useAutoScroll'
 
 const props = defineProps<{
   thinkingPoints: string[]
-  isMobile?: boolean
   isAutoMode: boolean
   isExecuting: boolean
   isGenerating: boolean
