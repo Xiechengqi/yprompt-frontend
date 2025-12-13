@@ -46,12 +46,12 @@
           </div>
         </div>
         <button
-          @click="$emit('refresh-config')"
+          @click="emit('refresh-config')"
           :disabled="isLoading"
-          class="flex items-center space-x-2 px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          class="flex items-center space-x-2 px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
         >
           <RefreshCw :class="['w-4 h-4', isLoading ? 'animate-spin' : '']" />
-          <span>{{ isLoading ? '刷新中...' : '刷新配置' }}</span>
+          <span>刷新配置</span>
         </button>
       </div>
 
@@ -118,16 +118,9 @@
               <span class="text-gray-500 w-24 flex-shrink-0">API Key:</span>
               <div class="flex-1 flex items-center space-x-2">
                 <span class="text-gray-900 font-mono text-xs break-all">
-                  {{ maskApiKey(provider.apiKey) }}
+                  {{ '********' + provider.apiKey.substring(provider.apiKey.length - 4) }}
                 </span>
-                <button
-                  @click="toggleApiKeysVisibility"
-                  class="text-gray-400 hover:text-gray-600 ml-2"
-                  :title="providerStore.showApiKeys ? '隐藏 API Key' : '显示 API Key'"
-                >
-                  <Eye v-if="!providerStore.showApiKeys" class="w-4 h-4" />
-                  <EyeOff v-else class="w-4 h-4" />
-                </button>
+
               </div>
             </div>
             <div v-if="provider.baseUrl" class="flex items-start">
@@ -202,9 +195,8 @@
 
 <script setup lang="ts">
 import { ref } from 'vue'
-import { Settings, AlertCircle, RefreshCw, Eye, EyeOff, Play, CheckCircle, XCircle, Clock } from 'lucide-vue-next'
+import { Settings, AlertCircle, RefreshCw, Play, CheckCircle, XCircle, Clock } from 'lucide-vue-next'
 import type { ProviderConfig } from '@/stores/providerStore'
-import { useProviderStore } from '@/stores/providerStore'
 import { useSettingsStore } from '@/stores/settingsStore'
 import type { ModelParams } from '@/stores/settingsStore'
 import { AIService } from '@/services/aiService'
@@ -226,7 +218,6 @@ const emit = defineEmits<{
 }>()
 
 // Store
-const providerStore = useProviderStore()
 const settingsStore = useSettingsStore()
 const notificationStore = useNotificationStore()
 
@@ -261,10 +252,7 @@ const detailInfo = ref<{
   status: 'testing'
 })
 
-// 方法
-const toggleApiKeysVisibility = () => {
-  providerStore.toggleApiKeysVisibility()
-}
+
 
 // 构建请求信息
 const buildRequestInfo = (
@@ -660,16 +648,7 @@ const formatTime = (date: Date) => {
   }).format(date)
 }
 
-const maskApiKey = (apiKey: string) => {
-  if (!apiKey) return '未配置'
-  if (providerStore.showApiKeys) {
-    // 显示完整的 API Key
-    return apiKey
-  }
-  // 隐藏 API Key
-  if (apiKey.length <= 8) return '***'
-  return apiKey.substring(0, 8) + '...' + apiKey.substring(apiKey.length - 4)
-}
+
 
 const getProviderTypeColor = (type: string) => {
   const colors: Record<string, string> = {

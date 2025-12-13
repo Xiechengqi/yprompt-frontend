@@ -205,71 +205,13 @@ export const useSettingsStore = defineStore('settings', () => {
     return model
   }
 
-  // 添加新的提供商
-  const addProvider = (type: 'openai' | 'anthropic' | 'google' | 'custom', customConfig?: Partial<ProviderConfig>) => {
-    const template = getProviderTemplate(type)
-    
-    // 生成唯一ID
-    const id = type === 'custom' 
-      ? `custom_${Date.now()}` 
-      : `${type}_${Date.now()}`
-    
-    const newProvider: ProviderConfig = {
-      ...template,
-      ...customConfig,
-      id,
-      apiKey: customConfig?.apiKey || '', // 确保apiKey不为undefined
-      enabled: true, // 默认启用新添加的提供商
-      models: template.models.map(model => ({
-        ...model,
-        provider: id
-      }))
-    }
-    
-    providers.value.unshift(newProvider)  // 新提供商排在前面
-    return newProvider
-  }
 
-  // 添加新模型到指定提供商
-  const addModel = (providerId: string, model: Omit<ModelConfig, 'provider'>) => {
-    const provider = providers.value.find(p => p.id === providerId)
-    if (provider) {
-      provider.models.unshift({  // 新模型排在前面
-        ...model,
-        provider: providerId
-      })
-    }
-  }
 
-  // 保存设置到本地存储
+
+
   const saveSettings = async () => {
     console.log('[settingsStore] 开始保存设置...')
-
-    // 保存到后端 API
-    try {
-      const { saveSettings: saveSettingsApi } = await import('@/services/settingsApi')
-      await saveSettingsApi({
-        providers: providers.value
-      })
-      console.log('[settingsStore] 已保存到后端 API')
-    } catch (error) {
-      console.error('[settingsStore] 保存到后端失败，保存到localStorage:', error)
-      // 如果后端保存失败，保存到 localStorage（向后兼容）
-      localStorage.setItem('yprompt_providers', JSON.stringify(providers.value))
-    }
-    
-    // 保存用户选择到 localStorage
-    localStorage.setItem('yprompt_providers', JSON.stringify(providers.value))
-    localStorage.setItem('yprompt_selected_provider', selectedProvider.value)
-    localStorage.setItem('yprompt_selected_model', selectedModel.value)
-    localStorage.setItem('yprompt_stream_mode', JSON.stringify(streamMode.value))
-    // 保存精简版规则开关
-    localStorage.setItem('yprompt_use_slim_rules', JSON.stringify(useSlimRules.value))
-
-    // 保存全局模型参数（应用到所有模型）
-    console.log('[settingsStore] 全局模型参数:', globalModelParams.value)
-    localStorage.setItem('yprompt_global_model_params', JSON.stringify(globalModelParams.value))
-
+    console.log('[settingsStore] 设置为只读模式，不保存设置。')
     // 同步到 providerStore
     syncSelectionToProviderStore()
 
@@ -291,9 +233,34 @@ export const useSettingsStore = defineStore('settings', () => {
     // 动态导入以避免循环依赖
     import('@/stores/providerStore').then(({ useProviderStore }) => {
       const providerStore = useProviderStore()
-      console.log(`[settingsStore] 设置 providerStore: provider=${selectedProvider.value}, model=${selectedModel.value}`)
-      providerStore.selectedProviderId = selectedProvider.value
-      providerStore.selectedModelId = selectedModel.value
+      
+      // 检查 providerStore 是否已经有有效的选择
+      const currentProviderExists = providerStore.selectedProviderId && 
+        providerStore.enabledProviders.find(p => p.id === providerStore.selectedProviderId)
+      const currentModelExists = currentProviderExists && providerStore.selectedModelId &&
+        providerStore.getAvailableModelsByProvider(providerStore.selectedProviderId)
+          .find(m => m.id === providerStore.selectedModelId)
+      
+      // 如果 providerStore 已经有有效的选择，且与 settingsStore 不同，优先使用 providerStore 的选择
+      // 这样可以避免覆盖用户在导航栏中的选择
+      if (currentProviderExists && currentModelExists && 
+          providerStore.selectedProviderId !== selectedProvider.value) {
+        console.log(`[settingsStore] providerStore 已有有效选择，不覆盖: provider=${providerStore.selectedProviderId}, model=${providerStore.selectedModelId}`)
+        // 同步 providerStore 的选择到 settingsStore
+        selectedProvider.value = providerStore.selectedProviderId
+        selectedModel.value = providerStore.selectedModelId
+      } else if (!currentProviderExists || !currentModelExists) {
+        // providerStore 没有有效选择，使用 settingsStore 的选择
+        if (selectedProvider.value) {
+          providerStore.selectProvider(selectedProvider.value)
+        }
+        if (selectedModel.value && selectedProvider.value) {
+          providerStore.selectModel(selectedModel.value)
+        }
+        console.log(`[settingsStore] 设置 providerStore: provider=${selectedProvider.value}, model=${selectedModel.value}`)
+      } else {
+        console.log(`[settingsStore] providerStore 和 settingsStore 选择一致，无需同步`)
+      }
     }).catch(error => {
       console.warn('[settingsStore] 同步到 providerStore 失败:', error)
     }).finally(() => {
@@ -417,51 +384,16 @@ export const useSettingsStore = defineStore('settings', () => {
       console.error('从云端加载提示词规则失败:', error)
     }
 
-    // 加载完成后同步到 providerStore
-    syncSelectionToProviderStore()
+    // 加载完成后同步到 providerStore（但不覆盖已有的有效选择）
+    // 延迟执行，确保 providerStore 已经初始化
+    setTimeout(() => {
+      syncSelectionToProviderStore()
+    }, 0)
   }
 
-  // 删除提供商
-  const deleteProvider = (providerId: string) => {
-    const index = providers.value.findIndex(p => p.id === providerId)
-    if (index > -1) {
-      providers.value.splice(index, 1)
-      
-      // 如果删除的是当前选中的提供商，重置选择
-      if (selectedProvider.value === providerId) {
-        selectedProvider.value = ''
-        selectedModel.value = ''
-        
-        // 自动选择下一个可用的提供商
-        const availableProviders = getAvailableProviders()
-        if (availableProviders.length > 0) {
-          selectedProvider.value = availableProviders[0].id
-          const availableModels = getAvailableModels(selectedProvider.value)
-          if (availableModels.length > 0) {
-            selectedModel.value = availableModels[0].id
-          }
-        }
-      }
-      
-      // 立即保存设置到后端
-      saveSettings()
-    }
-  }
 
-  // 删除模型
-  const deleteModel = (providerId: string, modelId: string) => {
-    const provider = providers.value.find(p => p.id === providerId)
-    if (provider) {
-      const modelIndex = provider.models.findIndex(m => m.id === modelId)
-      if (modelIndex > -1) {
-        provider.models.splice(modelIndex, 1)
-        // 如果删除的是当前选中的模型，重置选择
-        if (selectedModel.value === modelId) {
-          selectedModel.value = ''
-        }
-      }
-    }
-  }
+
+
 
   // 保存原始值,用于对比是否改变
   const originalPromptRules = ref<any>(null)
@@ -822,10 +754,6 @@ export const useSettingsStore = defineStore('settings', () => {
     getAvailableModels,
     getCurrentProvider,
     getCurrentModel,
-    addProvider,
-    addModel,
-    deleteProvider,
-    deleteModel,
     saveSettings,
     loadSettings,
     // 提示词编辑方法

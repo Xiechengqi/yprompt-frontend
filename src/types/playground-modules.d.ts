@@ -3,11 +3,6 @@ declare module '@/components/playground/PlaygroundApp.js' {
   export default component
 }
 
-declare module '@/components/playground/ChatPanel.js' {
-  const component: any
-  export default component
-}
-
 declare module '@/components/playground/PlaygroundChatPanel.vue' {
   const component: any
   export default component

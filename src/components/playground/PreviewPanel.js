@@ -1,9 +1,9 @@
 
 
 
-import { h, ref, onMounted, onUpdated, watch, nextTick, computed, onUnmounted } from 'vue';
+import { ref, onMounted, onUpdated, watch, nextTick, computed, onUnmounted } from 'vue';
 import MindMap from './MindMap.js';
-import { loadECharts, loadD3, loadMermaid, isLoading } from '@/utils/chartLazyLoader';
+import { loadECharts, loadD3, loadMermaid } from '@/utils/chartLazyLoader';
 
 export default {
   name: 'PreviewPanel',
@@ -38,18 +38,7 @@ export default {
 
         <!-- Center: Context Aware Actions -->
         <div class="flex items-center gap-4">
-            <!-- Device Toggles (HTML) -->
-            <div v-if="activeTab === 'preview' && artifact && artifact.type === 'html'" class="flex items-center gap-1 bg-gray-50 p-1 rounded-lg border border-gray-200">
-                <button @click="deviceMode = 'desktop'" :class="['p-1.5 rounded transition-colors', deviceMode === 'desktop' ? 'bg-white shadow text-blue-600' : 'text-gray-400 hover:text-gray-600']" title="Desktop (100%)">
-                    <i data-lucide="monitor" class="w-4 h-4"></i>
-                </button>
-                <button @click="deviceMode = 'tablet'" :class="['p-1.5 rounded transition-colors', deviceMode === 'tablet' ? 'bg-white shadow text-blue-600' : 'text-gray-400 hover:text-gray-600']" title="Tablet (768px)">
-                    <i data-lucide="tablet" class="w-4 h-4"></i>
-                </button>
-                <button @click="deviceMode = 'mobile'" :class="['p-1.5 rounded transition-colors', deviceMode === 'mobile' ? 'bg-white shadow text-blue-600' : 'text-gray-400 hover:text-gray-600']" title="Mobile (375px)">
-                    <i data-lucide="smartphone" class="w-4 h-4"></i>
-                </button>
-            </div>
+
 
             <!-- Mermaid Theme Toggle -->
             <div v-if="activeTab === 'preview' && artifact && artifact.type === 'mermaid'" class="flex items-center gap-1 bg-gray-50 p-1 rounded-lg border border-gray-200">
@@ -171,10 +160,7 @@ export default {
             <!-- Device Container Wrapper -->
             <div
               v-if="artifact"
-              :class="['relative bg-white shadow-xl transition-all duration-300 ease-in-out z-10 border border-gray-300 overflow-hidden flex-shrink-0', 
-                 deviceMode === 'desktop' ? 'w-full h-full max-w-[98%] rounded-lg' : 
-                 deviceMode === 'tablet' ? 'w-[768px] h-[1024px] max-h-[95%] rounded-xl my-auto' : 
-                 'w-[375px] h-[812px] max-h-[95%] rounded-2xl border-8 border-gray-800 my-auto']">
+              :class="['relative bg-white shadow-xl transition-all duration-300 ease-in-out z-10 border border-gray-300 overflow-hidden flex-shrink-0', 'w-full h-full max-w-[98%] rounded-lg']">
               
                 <!-- HTML (Enhanced with Import Maps for ThreeJS & ECharts) -->
                 <!-- Added :key to force re-render on reload -->
@@ -373,7 +359,6 @@ export default {
     let d3 = null;
     
     // View Modes
-    const deviceMode = ref('desktop');
     const isFullscreen = ref(false);
     const mermaidLook = ref('default'); // 'default' | 'handDrawn'
 
@@ -1300,7 +1285,7 @@ export default {
         svgWrapper, mermaidRef, mermaidContainerRef, echartsRef, drawioRef, currentTransform, mainContainer,
         undo, redo, handleKeydown, historyIndex, history,
         selectionBox, inlineEdit, inlineInputRef, commitInlineEdit, handleInlineInputKeydown,
-        deviceMode, toggleFullscreen, isFullscreen, downloadArtifact,
+        toggleFullscreen, isFullscreen, downloadArtifact,
         mermaidLook, toggleMermaidLook,
         reloadPreview, reloadKey,
         // Loading states

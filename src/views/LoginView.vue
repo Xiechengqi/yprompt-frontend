@@ -27,14 +27,6 @@
         <!-- 本地账号密码登录 -->
         <div v-if="authConfig.local_auth_enabled" class="login-section">
           <form @submit.prevent="handleLocalLogin" class="login-form">
-            <!-- 用户名显示（固定为admin） -->
-            <div class="form-group">
-              <label>用户名</label>
-              <div class="form-input readonly-input" style="background: #f7fafc; color: #4a5568;">
-                admin
-              </div>
-            </div>
-
             <!-- 密码 -->
             <div class="form-group">
               <label for="password">密码</label>
@@ -131,7 +123,7 @@ const isLoading = ref(true)
 const isSubmitting = ref(false)
 const errorMessage = ref('')
 const showPassword = ref(false)
-const rememberMe = ref(false)
+const rememberMe = ref(true) // 默认勾选记住我
 
 // 表单验证错误
 const loginErrors = ref<{
@@ -179,12 +171,12 @@ const fetchAuthConfig = async () => {
   }
 }
 
-// 保存用户名
-const saveRememberedUsername = () => {
+// 保存记住我设置
+const saveRememberMe = () => {
   if (rememberMe.value) {
-    localStorage.setItem('yprompt_remembered_username', 'admin')
+    localStorage.setItem('yprompt_remember_me', 'true')
   } else {
-    localStorage.removeItem('yprompt_remembered_username')
+    localStorage.removeItem('yprompt_remember_me')
   }
 }
 
@@ -205,7 +197,7 @@ const handleLocalLogin = async () => {
 
     if (result.success) {
       // 保存记住我设置
-      saveRememberedUsername()
+      saveRememberMe()
       // 登录成功，跳转到原始目标路径或主页
       const redirect = router.currentRoute.value.query.redirect as string
       if (redirect && redirect !== '/login') {
@@ -230,6 +222,12 @@ onMounted(() => {
   if (authStore.isLoggedIn) {
     router.push('/')
     return
+  }
+
+  // 恢复记住我状态
+  const savedRememberMe = localStorage.getItem('yprompt_remember_me')
+  if (savedRememberMe === 'true') {
+    rememberMe.value = true
   }
 
   // 获取认证配置

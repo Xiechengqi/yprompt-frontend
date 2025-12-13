@@ -31,6 +31,7 @@ export const useProviderStore = defineStore('provider', () => {
   const lastRefreshedAt = ref<Date | null>(null)
   const isLoading = ref(false)
   const error = ref<string | null>(null)
+  const isInitialized = ref(false) // 标记是否已经初始化过
 
   // 当前选中的 Provider 和 Model
   const selectedProviderId = ref<string>('')
@@ -101,12 +102,17 @@ export const useProviderStore = defineStore('provider', () => {
 
   /**
    * 从后端 API 刷新配置
+   * @param autoSelectFirst 如果当前选择无效，是否自动选择第一个（默认true）
    */
-  const refreshSettings = async () => {
+  const refreshSettings = async (autoSelectFirst: boolean = true) => {
     isLoading.value = true
     error.value = null
 
     try {
+      // 保存当前选择，以便在刷新后恢复
+      const currentProviderId = selectedProviderId.value
+      const currentModelId = selectedModelId.value
+
       const settings: Settings = await getSettings()
 
       // 更新 providers
@@ -116,33 +122,53 @@ export const useProviderStore = defineStore('provider', () => {
       lastRefreshedAt.value = new Date()
 
       // 验证当前选择是否仍然有效
-      const currentProviderExists = enabledProviders.value.find(p => p.id === selectedProviderId.value)
-      const currentModelExists = currentProviderExists?.models.find(m => m.id === selectedModelId.value)
+      const currentProviderExists = enabledProviders.value.find(p => p.id === currentProviderId)
+      const currentModelExists = currentProviderExists?.models.find(m => m.id === currentModelId)
 
-      // 如果当前选择无效（不存在或已被删除），使用 .setting.json 中的第一个作为默认值
-      if (!currentProviderExists || !currentModelExists) {
-        console.log('[providerStore] 当前选择无效，使用配置文件���的第一个提供商和模型')
+      // 如果当前选择仍然有效，恢复它（确保不被重置）
+      if (currentProviderExists && currentModelExists) {
+        selectedProviderId.value = currentProviderId
+        selectedModelId.value = currentModelId
+        console.log('[providerStore] 当前选择有效，保持不变:', currentProviderId, currentModelId)
+      } else if (!currentProviderExists || !currentModelExists) {
+        // 如果当前选择无效（不存在或已被删除）
+        // 先尝试从 localStorage 恢复
+        const savedProvider = localStorage.getItem('yprompt_selected_provider')
+        const savedModel = localStorage.getItem('yprompt_selected_model')
+        
+        const savedProviderExists = savedProvider ? enabledProviders.value.find(p => p.id === savedProvider) : null
+        const savedModelExists = savedProviderExists && savedModel ? savedProviderExists.models.find(m => m.id === savedModel) : null
+        
+        if (savedProviderExists && savedModelExists && savedProvider && savedModel) {
+          // 如果 localStorage 中有有效选择，使用它
+          selectedProviderId.value = savedProvider
+          selectedModelId.value = savedModel
+          console.log('[providerStore] 当前选择无效，从localStorage恢复:', savedProvider, savedModel)
+        } else if (autoSelectFirst) {
+          // 如果 localStorage 也没有有效选择，且允许自动选择，使用第一个
+          console.log('[providerStore] 当前选择无效，使用配置文件中的第一个提供商和模型')
 
-        if (enabledProviders.value.length > 0) {
-          const firstProvider = enabledProviders.value[0]
-          selectedProviderId.value = firstProvider.id
+          if (enabledProviders.value.length > 0) {
+            const firstProvider = enabledProviders.value[0]
+            selectedProviderId.value = firstProvider.id
 
-          const firstModel = firstProvider.models[0]
-          if (firstModel) {
-            selectedModelId.value = firstModel.id
+            const firstModel = firstProvider.models[0]
+            if (firstModel) {
+              selectedModelId.value = firstModel.id
+            } else {
+              selectedModelId.value = ''
+            }
           } else {
+            // 没有可用的提供商
+            selectedProviderId.value = ''
             selectedModelId.value = ''
           }
-        } else {
-          // 没有可用的提供商
-          selectedProviderId.value = ''
-          selectedModelId.value = ''
-        }
 
-        // 保存新的选择到 localStorage
-        saveSelectionToLocalStorage()
-      } else {
-        console.log('[providerStore] 当前选择有效，保持不变')
+          // 保存新的选择到 localStorage
+          saveSelectionToLocalStorage()
+        } else {
+          console.log('[providerStore] 当前选择无效，但不自动选择（由调用方处理）')
+        }
       }
 
     } catch (err: any) {
@@ -156,16 +182,106 @@ export const useProviderStore = defineStore('provider', () => {
 
   /**
    * 初始化：从 API 加载配置 + 恢复用户选择
+   * 默认从 .setting.json 的第一个提供商和模型获取
+   * 如果已经初始化过，只刷新配置，不重置选择
    */
   const initialize = async () => {
-    // 1. 从 localStorage 恢复选择和流式模式
-    loadSelectionFromLocalStorage()
+    // 如果已经初始化过，只刷新配置，保持当前选择
+    if (isInitialized.value) {
+      console.log('[providerStore] 已经初始化过，只刷新配置，保持当前选择')
+      const currentProviderId = selectedProviderId.value
+      const currentModelId = selectedModelId.value
+      
+      await refreshSettings(false)
+      
+      // 验证当前选择是否仍然有效
+      const currentProviderExists = enabledProviders.value.find(p => p.id === currentProviderId)
+      const currentModelExists = currentProviderExists?.models.find(m => m.id === currentModelId)
+      
+      // 如果当前选择仍然有效，恢复它（refreshSettings 可能已经改变了它）
+      if (currentProviderExists && currentModelExists) {
+        if (selectedProviderId.value !== currentProviderId || selectedModelId.value !== currentModelId) {
+          selectedProviderId.value = currentProviderId
+          selectedModelId.value = currentModelId
+          console.log('[providerStore] 恢复之前的选择:', currentProviderId, currentModelId)
+        }
+      } else {
+        // 如果当前选择无效，尝试从 localStorage 恢复
+        const savedProvider = localStorage.getItem('yprompt_selected_provider')
+        const savedModel = localStorage.getItem('yprompt_selected_model')
+        
+        const savedProviderExists = savedProvider ? enabledProviders.value.find(p => p.id === savedProvider) : null
+        const savedModelExists = savedProviderExists && savedModel ? savedProviderExists.models.find(m => m.id === savedModel) : null
+        
+        if (savedProviderExists && savedModelExists && savedProvider && savedModel) {
+          selectedProviderId.value = savedProvider
+          selectedModelId.value = savedModel
+          console.log('[providerStore] 当前选择无效，从localStorage恢复:', savedProvider, savedModel)
+        } else if (enabledProviders.value.length > 0) {
+          // 如果 localStorage 也没有有效选择，使用第一个
+          const firstProvider = enabledProviders.value[0]
+          selectedProviderId.value = firstProvider.id
+          const firstModel = firstProvider.models[0]
+          if (firstModel) {
+            selectedModelId.value = firstModel.id
+          }
+          saveSelectionToLocalStorage()
+          console.log('[providerStore] 使用第一个提供商和模型:', firstProvider.id, firstModel?.id)
+        }
+      }
+      return
+    }
+
+    // 首次初始化
+    console.log('[providerStore] 首次初始化')
+    
+    // 1. 从 localStorage 恢复流式模式
     loadStreamModeFromLocalStorage()
 
-    // 2. 从 API 加载配置（会自动验证选择并使用第一个作为默认值）
-    await refreshSettings()
+    // 2. 从 API 加载配置（不自动选择，由后续逻辑处理）
+    await refreshSettings(false)
 
-    // 3. 初始化后同步到 settingsStore
+    // 3. 检查是否有有效的localStorage选择
+    const savedProvider = localStorage.getItem('yprompt_selected_provider')
+    const savedModel = localStorage.getItem('yprompt_selected_model')
+    
+    // 验证保存的选择是否仍然有效
+    const savedProviderExists = savedProvider ? enabledProviders.value.find(p => p.id === savedProvider) : null
+    const savedModelExists = savedProviderExists && savedModel ? savedProviderExists.models.find(m => m.id === savedModel) : null
+    
+    if (savedProviderExists && savedModelExists && savedProvider && savedModel) {
+      // 如果有有效的保存选择，使用它
+      selectedProviderId.value = savedProvider
+      selectedModelId.value = savedModel
+      console.log('[providerStore] 使用localStorage中保存的选择:', savedProvider, savedModel)
+    } else {
+      // 如果没有保存的选择或选择无效，使用 .setting.json 中的第一个作为默认值
+      if (enabledProviders.value.length > 0) {
+        const firstProvider = enabledProviders.value[0]
+        selectedProviderId.value = firstProvider.id
+        
+        const firstModel = firstProvider.models[0]
+        if (firstModel) {
+          selectedModelId.value = firstModel.id
+        } else {
+          selectedModelId.value = ''
+        }
+        
+        // 保存默认选择到 localStorage
+        saveSelectionToLocalStorage()
+        console.log('[providerStore] 使用 .setting.json 中的第一个提供商和模型:', firstProvider.id, firstModel?.id)
+      } else {
+        // 没有可用的提供商
+        selectedProviderId.value = ''
+        selectedModelId.value = ''
+        console.log('[providerStore] 没有可用的提供商')
+      }
+    }
+
+    // 4. 标记为已初始化
+    isInitialized.value = true
+
+    // 5. 初始化后同步到 settingsStore
     syncSelectionToSettingsStore()
   }
 
@@ -216,14 +332,6 @@ export const useProviderStore = defineStore('provider', () => {
   const saveSelectionToLocalStorage = () => {
     localStorage.setItem('yprompt_selected_provider', selectedProviderId.value)
     localStorage.setItem('yprompt_selected_model', selectedModelId.value)
-  }
-
-  const loadSelectionFromLocalStorage = () => {
-    const savedProvider = localStorage.getItem('yprompt_selected_provider')
-    const savedModel = localStorage.getItem('yprompt_selected_model')
-
-    if (savedProvider) selectedProviderId.value = savedProvider
-    if (savedModel) selectedModelId.value = savedModel
   }
 
   const loadStreamModeFromLocalStorage = () => {
@@ -281,6 +389,7 @@ export const useProviderStore = defineStore('provider', () => {
     lastRefreshedAt,
     isLoading,
     error,
+    isInitialized,
     selectedProviderId,
     selectedModelId,
     streamMode,

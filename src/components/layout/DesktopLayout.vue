@@ -147,25 +147,5 @@ import GitCommit from '@/components/GitCommit.vue'
   }
 }
 
-/* Responsive adjustments */
-@media (max-width: 768px) {
-  .background-orb {
-    filter: blur(60px);
-  }
 
-  .orb-1 {
-    width: 350px;
-    height: 350px;
-  }
-
-  .orb-2 {
-    width: 300px;
-    height: 300px;
-  }
-
-  .orb-3 {
-    width: 250px;
-    height: 250px;
-  }
-}
 </style>

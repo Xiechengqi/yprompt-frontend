@@ -46,7 +46,10 @@ const providerStore = useProviderStore()
 
 // 初始化
 onMounted(async () => {
-  await providerStore.initialize()
+  // 如果还没有初始化，则初始化
+  if (!providerStore.isInitialized) {
+    await providerStore.initialize()
+  }
 
   // 如果没有配置，显示设置界面
   const hasConfiguredProvider = providerStore.enabledProviders.length > 0

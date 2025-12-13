@@ -168,6 +168,10 @@ export function useChatLogic(
 
         const shouldEndConversation = checkAIDecision(aiResponse)
         
+        // 重置状态，允许用户继续输入
+        promptStore.isTyping = false
+        promptStore.isGenerating = false
+        
         if (shouldEndConversation || aiResponse.includes('基于我们的对话，我现在为您生成需求报告：')) {
           setTimeout(async () => {
             const globalProvider = providerStore.currentProvider
@@ -198,6 +202,9 @@ export function useChatLogic(
           const cleanResponse = cleanAIResponse(aiResponse)
           await chatMessages.simulateTyping(cleanResponse, false)
 
+          // 重置状态，允许用户继续输入
+          promptStore.isGenerating = false
+
           setTimeout(async () => {
             const globalProvider = providerStore.currentProvider
             const globalModel = providerStore.currentModel
@@ -208,6 +215,9 @@ export function useChatLogic(
         } else {
           const cleanResponse = cleanAIResponse(aiResponse)
           await chatMessages.simulateTyping(cleanResponse, false)
+          
+          // 重置状态，允许用户继续输入
+          promptStore.isGenerating = false
         }
       }
       } catch (error: unknown) {
@@ -539,6 +549,9 @@ export function useChatLogic(
 
         const shouldEndConversation = checkAIDecision(aiResponse)
         
+        // 重置状态，允许用户继续输入
+        promptStore.isTyping = false
+        
         if (shouldEndConversation || aiResponse.includes('基于我们的对话，我现在为您生成需求报告：')) {
           setTimeout(async () => {
             const globalProvider = providerStore.currentProvider
@@ -569,6 +582,9 @@ export function useChatLogic(
           const cleanResponse = cleanAIResponse(aiResponse)
           await chatMessages.simulateTyping(cleanResponse, false)
 
+          // 重置状态，允许用户继续输入
+          promptStore.isTyping = false
+
           setTimeout(async () => {
             const globalProvider = providerStore.currentProvider
             const globalModel = providerStore.currentModel
@@ -579,6 +595,9 @@ export function useChatLogic(
         } else {
           const cleanResponse = cleanAIResponse(aiResponse)
           await chatMessages.simulateTyping(cleanResponse, false)
+          
+          // 重置状态，允许用户继续输入
+          promptStore.isTyping = false
         }
       }
     } catch (error: unknown) {

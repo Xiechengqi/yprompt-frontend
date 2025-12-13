@@ -44,30 +44,4 @@ export async function getSettings(): Promise<Settings> {
   return result.data
 }
 
-/**
- * Save settings to backend
- */
-export async function saveSettings(settings: Settings): Promise<Settings> {
-  const token = localStorage.getItem('yprompt_token')
 
-  const response = await fetch(`${API_BASE_URL}/api/settings/`, {
-    method: 'PUT',
-    headers: {
-      'Authorization': `Bearer ${token}`,
-      'Content-Type': 'application/json'
-    },
-    body: JSON.stringify(settings)
-  })
-
-  if (!response.ok) {
-    throw new Error(`Failed to save settings: ${response.statusText}`)
-  }
-
-  const result: SettingsResponse = await response.json()
-
-  if (result.code !== 200) {
-    throw new Error(result.message || 'Failed to save settings')
-  }
-
-  return result.data
-}

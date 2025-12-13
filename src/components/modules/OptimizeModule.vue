@@ -208,7 +208,10 @@ onMounted(() => {
   window.addEventListener('resize', handleResize)
   // 初始化设置和模型列表
   settingsStore.loadSettings()
-  providerStore.initialize()
+  // 如果还没有初始化，则初始化
+  if (!providerStore.isInitialized) {
+    providerStore.initialize()
+  }
   
   // 监听对比触发标志 - 持续监听
   const checkCompareTrigg = setInterval(() => {

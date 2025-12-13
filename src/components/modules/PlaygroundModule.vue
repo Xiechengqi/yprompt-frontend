@@ -38,8 +38,8 @@ const providerStore = useProviderStore()
 
 // 初始化 providerStore
 onMounted(async () => {
-  // 如果还没有加载配置，则初始化
-  if (providerStore.allProviders.length === 0) {
+  // 如果还没有初始化，则初始化
+  if (!providerStore.isInitialized) {
     await providerStore.initialize()
   }
 })

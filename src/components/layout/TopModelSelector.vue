@@ -51,11 +51,6 @@
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
       </svg>
     </div>
-
-    <!-- 状态指示器 -->
-    <div v-if="providerStore.currentProvider && providerStore.currentModel" class="flex-shrink-0 ml-2">
-      <div class="w-1.5 h-1.5 rounded-full bg-green-500" :title="`${providerStore.currentProvider.name} / ${providerStore.currentModel.name}`"></div>
-    </div>
   </div>
 </template>
 
@@ -104,7 +99,8 @@ const selectedProviderKey = computed({
       return
     }
     const { id } = parseProviderKey(key)
-    providerStore.selectedProviderId = id
+    // 使用 selectProvider 方法，确保保存到 localStorage
+    providerStore.selectProvider(id)
   }
 })
 
@@ -121,7 +117,8 @@ const selectedModelKey = computed({
       return
     }
     const [, id] = key.split('|')
-    providerStore.selectedModelId = id
+    // 使用 selectModel 方法，确保保存到 localStorage
+    providerStore.selectModel(id)
   }
 })
 
