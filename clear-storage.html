@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>清理配置数据</title>
+</head>
+<body>
+  <h2>正在清理 localStorage...</h2>
+  <script>
+    // 清理相关的 localStorage 数据
+    const keysToRemove = [
+      'yprompt_selected_provider',
+      'yprompt_selected_model',
+      'yprompt_stream_mode',
+      'yprompt_show_api_keys',
+      'yprompt_token',
+      'yprompt_global_model_params'
+    ]
+
+    keysToRemove.forEach(key => {
+      localStorage.removeItem(key)
+    })
+
+    console.log('localStorage 已清理')
+    document.body.innerHTML += '<p>✅ localStorage 清理完成，即将跳转到测试页面...</p>'
+
+    setTimeout(() => {
+      window.location.href = '/test-fix.html'
+    }, 2000)
+  </script>
+</body>
+</html>

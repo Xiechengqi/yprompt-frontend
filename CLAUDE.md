@@ -4,7 +4,7 @@
 
 ## 项目概述
 
-YPrompt 是一个基于 Vue.js 的前端应用程序，用于 AI 驱动的提示词生成和管理。它提供了模块化界面，包含生成、优化、操练场和库等功能区域。该应用使用本地用户名/密码认证配合 JWT token，并通过统一接口支持多个 AI 提供商。
+YPrompt 是一个基于 React 18 的前端应用程序，用于 AI 驱动的提示词生成和管理。它提供了模块化界面，包含生成、优化、操练场和库等功能区域。该应用使用本地用户名/密码认证配合 JWT token，并通过统一接口支持多个 AI 提供商。
 
 ## 开发命令
 
@@ -40,10 +40,10 @@ VITE_DEBUG_MODE=true npm run dev
 ## 架构概述
 
 ### 技术栈
-- **Vue 3.4** 配合 Composition API 和 TypeScript
+- **React 18.3** 配合 TypeScript 和现代 Hooks
 - **Vite 5.0** 作为构建工具和开发服务器
-- **Pinia 2.1** 用于状态管理
-- **Vue Router 4.2** 用于路由
+- **Zustand 4.5** 用于状态管理
+- **React Router 6.26** 用于路由
 - **Tailwind CSS 3.3** 用于样式
 - **关键库**: Marked (Markdown), DOMPurify (XSS 防护), Highlight.js (语法高亮), ECharts (图表), Mermaid (图表)
 - **无 UI 组件库** - 仅使用自定义组件

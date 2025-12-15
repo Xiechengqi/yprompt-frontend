@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>自动生成提示词测试</title>
+  <style>
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      max-width: 1000px;
+      margin: 50px auto;
+      padding: 20px;
+      background: #f5f5f5;
+    }
+    .container {
+      background: white;
+      padding: 30px;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      margin-bottom: 20px;
+    }
+    .status-ok {
+      color: #10b981;
+      font-weight: bold;
+    }
+    .status-error {
+      color: #ef4444;
+      font-weight: bold;
+    }
+    .status-warning {
+      color: #f59e0b;
+      font-weight: bold;
+    }
+    button {
+      background: #4F46E5;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 6px;
+      cursor: pointer;
+      margin: 5px;
+    }
+    button:hover {
+      background: #4338CA;
+    }
+    button:disabled {
+      background: #9ca3af;
+      cursor: not-allowed;
+    }
+    pre {
+      background: #1e1e1e;
+      color: #d4d4d4;
+      padding: 15px;
+      border-radius: 6px;
+      overflow-x: auto;
+      font-size: 12px;
+    }
+    h2 {
+      color: #1f2937;
+      margin-bottom: 15px;
+    }
+    .test-result {
+      padding: 10px;
+      margin: 10px 0;
+      border-radius: 6px;
+      border: 1px solid #e5e7eb;
+    }
+    .step {
+      padding: 15px;
+      margin: 10px 0;
+      border-left: 4px solid #4F46E5;
+      background: #f9fafb;
+    }
+    .step-error {
+      border-left-color: #ef4444;
+      background: #fef2f2;
+    }
+    .step-success {
+      border-left-color: #10b981;
+      background: #f0fdf4;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🔧 自动生成提示词功能测试</h1>
+    <p>测试自动生成提示词功能是否能正确检测和使用 AI 模型配置</p>
+  </div>
+
+  <div class="container">
+    <h2>1. 测试步骤</h2>
+    <button onclick="runFullTest()" id="test-btn">运行完整测试</button>
+    <button onclick="checkConsoleLogs()">查看控制台日志</button>
+    <div id="test-status"></div>
+  </div>
+
+  <div class="container">
+    <h2>2. 测试流程</h2>
+    <div id="test-flow"></div>
+  </div>
+
+  <div class="container">
+    <h2>3. 配置状态</h2>
+    <div id="config-status"></div>
+  </div>
+
+  <div class="container">
+    <h2>4. 测试日志</h2>
+    <pre id="test-log">等待测试开始...</pre>
+  </div>
+
+  <script>
+    function log(message, type = 'info') {
+      const logEl = document.getElementById('test-log')
+      const timestamp = new Date().toLocaleTimeString()
+      const emoji = {
+        info: 'ℹ️',
+        success: '✅',
+        error: '❌',
+        warning: '⚠️',
+        debug: '🔍'
+      }
+      logEl.textContent += `[${timestamp}] ${emoji[type] || 'ℹ️'} ${message}\n`
+      logEl.scrollTop = logEl.scrollHeight
+    }
+
+    function updateStatus(message, type = 'info') {
+      const statusEl = document.getElementById('test-status')
+      const className = type === 'success' ? 'status-ok' :
+                       type === 'error' ? 'status-error' : 'status-warning'
+
+      statusEl.innerHTML = `<p class="${className}">${message}</p>`
+    }
+
+    function addStep(title, message, type = 'info') {
+      const flowEl = document.getElementById('test-flow')
+      const className = type === 'success' ? 'step-success' :
+                       type === 'error' ? 'step-error' : ''
+
+      flowEl.innerHTML += `
+        <div class="step ${className}">
+          <strong>${title}</strong>
+          <div>${message}</div>
+        </div>
+      `
+    }
+
+    function checkConsoleLogs() {
+      log('请打开浏览器开发者工具查看详细日志', 'info')
+    }
+
+    function getProviderStoreState() {
+      // 尝试从 localStorage 获取一些状态信息
+      const providerId = localStorage.getItem('yprompt_selected_provider') || '(未设置)'
+      const modelId = localStorage.getItem('yprompt_selected_model') || '(未设置)'
+      const streamMode = localStorage.getItem('yprompt_stream_mode') || 'true'
+
+      return {
+        providerId,
+        modelId,
+        streamMode: streamMode === 'true',
+        hasProvider: providerId !== '(未设置)',
+        hasModel: modelId !== '(未设置)'
+      }
+    }
+
+    function updateConfigStatus() {
+      const configStatus = getProviderStoreState()
+      const configEl = document.getElementById('config-status')
+
+      configEl.innerHTML = `
+        <h3>当前配置状态:</h3>
+        <pre>${JSON.stringify(configStatus, null, 2)}</pre>
+        <p class="${configStatus.hasProvider && configStatus.hasModel ? 'status-ok' : 'status-warning'}">
+          ${configStatus.hasProvider && configStatus.hasModel ? '✅ 配置完整' : '⚠️ 配置不完整'}
+        </p>
+      `
+    }
+
+    async function runFullTest() {
+      const testBtn = document.getElementById('test-btn')
+      testBtn.disabled = true
+      testBtn.textContent = '测试中...'
+
+      log('🚀 开始自动生成提示词功能测试', 'info')
+      updateStatus('正在测试...', 'info')
+
+      try {
+        // 步骤 1: 检查配置状态
+        addStep('步骤 1', '检查 AI 模型配置状态', 'info')
+        const configStatus = getProviderStoreState()
+
+        if (!configStatus.hasProvider || !configStatus.hasModel) {
+          addStep('步骤 1 - 失败', '缺少有效的 AI 模型配置', 'error')
+          updateStatus('配置不完整，请先在导航栏选择 AI 模型', 'warning')
+          log('❌ 配置不完整: provider=' + configStatus.providerId + ', model=' + configStatus.modelId, 'error')
+          testBtn.disabled = false
+          testBtn.textContent = '重新测试'
+          return
+        }
+
+        addStep('步骤 1 - 成功', '检测到有效的 AI 模型配置', 'success')
+        log('✅ 配置检查通过: provider=' + configStatus.providerId + ', model=' + configStatus.modelId, 'success')
+
+        // 步骤 2: 模拟进入生成页面
+        addStep('步骤 2', '检查是否可以访问生成页面', 'info')
+        updateConfigStatus()
+
+        // 这里我们可以尝试访问主应用来测试实际的自动生成功能
+        const mainAppUrl = window.location.origin + '/'
+
+        addStep('步骤 2 - 完成', '准备测试自动生成功能', 'success')
+        log('✅ 配置检查完成，准备测试实际功能', 'success')
+
+        // 步骤 3: 提供测试选项
+        addStep('步骤 3', '建议测试以下功能:', 'info')
+        log('💡 建议测试流程:', 'info')
+        log('1. 打开主应用 (点击下方按钮)', 'info')
+        log('2. 在 Chat 界面输入需求描述', 'info')
+        log('3. 等待 AI 生成需求报告', 'info')
+        log('4. 点击"自动生成提示词"按钮', 'info')
+        log('5. 验证是否能正常执行 4 个步骤', 'info')
+
+        updateStatus('✅ 配置检查通过！请到主应用测试实际功能', 'success')
+
+      } catch (error) {
+        addStep('测试失败', error.message, 'error')
+        updateStatus('测试失败: ' + error.message, 'error')
+        log('❌ 测试失败: ' + error.message, 'error')
+      } finally {
+        testBtn.disabled = false
+        testBtn.textContent = '重新测试'
+      }
+    }
+
+    // 页面加载时检查配置状态
+    window.addEventListener('DOMContentLoaded', () => {
+      log('🚀 自动生成提示词测试页面加载完成', 'info')
+      updateConfigStatus()
+    })
+  </script>
+</body>
+</html>

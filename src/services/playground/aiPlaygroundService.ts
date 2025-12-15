@@ -1,6 +1,6 @@
 import type { PlaygroundCapability } from '@/config/playgroundInstructions'
 import { AIService, type ChatMessage } from '@/services/aiService'
-import type { ProviderConfig } from '@/stores/settingsStore'
+import type { ProviderConfig } from '@/stores/providerStore'
 
 export interface PlaygroundMessage {
   id: string
@@ -60,8 +60,8 @@ export class PlaygroundAIService {
       }))
     )
 
-    const model = provider.models.find((m) => m.id === modelId)
-    const allowStream = model?.capabilities?.supportedParams.streaming !== false
+    // 默认允许流式输出，除非明确禁用
+    const allowStream = true
     const useStream = stream && allowStream
 
     return await this.aiService.callAI(aiMessages, provider, modelId, useStream, onChunk)

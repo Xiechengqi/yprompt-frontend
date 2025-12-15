@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI 配置调试</title>
+  <style>
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      max-width: 1000px;
+      margin: 20px auto;
+      padding: 20px;
+      background: #f5f5f5;
+    }
+    .container {
+      background: white;
+      padding: 30px;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      margin-bottom: 20px;
+    }
+    .status-ok {
+      color: #10b981;
+      font-weight: bold;
+    }
+    .status-error {
+      color: #ef4444;
+      font-weight: bold;
+    }
+    .status-warning {
+      color: #f59e0b;
+      font-weight: bold;
+    }
+    button {
+      background: #4F46E5;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 6px;
+      cursor: pointer;
+      margin: 5px;
+    }
+    button:hover {
+      background: #4338CA;
+    }
+    pre {
+      background: #1e1e1e;
+      color: #d4d4d4;
+      padding: 15px;
+      border-radius: 6px;
+      overflow-x: auto;
+      margin: 10px 0;
+    }
+    .section {
+      margin: 20px 0;
+      padding: 15px;
+      background: #f9fafb;
+      border-radius: 6px;
+    }
+    h2 {
+      color: #1f2937;
+      margin-bottom: 10px;
+    }
+    .test-button {
+      background: #10b981;
+    }
+    .test-button:hover {
+      background: #059669;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🔍 AI 配置状态调试</h1>
+    <p>这个页面用于调试 AI 模型配置检测问题</p>
+  </div>
+
+  <div class="container">
+    <h2>1. localStorage 状态</h2>
+    <button onclick="checkLocalStorage()">检查 localStorage</button>
+    <button onclick="clearLocalStorage()" style="background: #ef4444;">清空 localStorage</button>
+    <div id="localStorage-status"></div>
+  </div>
+
+  <div class="container">
+    <h2>2. 后端 API 状态</h2>
+    <button onclick="testBackendAPI()" class="test-button">测试后端 API</button>
+    <div id="backend-status"></div>
+  </div>
+
+  <div class="container">
+    <h2>3. 模拟 providerStore 状态</h2>
+    <button onclick="simulateProviderStore()" class="test-button">模拟加载 providerStore</button>
+    <div id="provider-status"></div>
+  </div>
+
+  <div class="container">
+    <h2>4. 完整测试流程</h2>
+    <button onclick="runFullTest()" style="background: #8b5cf6;">运行完整测试</button>
+    <div id="test-output"></div>
+  </div>
+
+  <div class="container">
+    <h2>5. 操作日志</h2>
+    <pre id="log">等待操作...</pre>
+  </div>
+
+  <script>
+    const KEYS = {
+      provider: 'yprompt_selected_provider',
+      model: 'yprompt_selected_model',
+      stream: 'yprompt_stream_mode',
+      apiKeys: 'yprompt_show_api_keys'
+    }
+
+    function log(message, type = 'info') {
+      const logEl = document.getElementById('log')
+      const timestamp = new Date().toLocaleTimeString()
+      const emoji = {
+        info: 'ℹ️',
+        success: '✅',
+        error: '❌',
+        warning: '⚠️'
+      }
+      logEl.textContent += `[${timestamp}] ${emoji[type] || 'ℹ️'} ${message}\n`
+      logEl.scrollTop = logEl.scrollHeight
+    }
+
+    function checkLocalStorage() {
+      const statusEl = document.getElementById('localStorage-status')
+      let html = '<h3>localStorage 内容:</h3><pre>'
+
+      const data = {}
+      Object.entries(KEYS).forEach(([key, storageKey]) => {
+        const value = localStorage.getItem(storageKey)
+        data[key] = value || '(空)'
+      })
+
+      html += JSON.stringify(data, null, 2)
+      html += '</pre>'
+
+      // 状态检查
+      if (data.provider === '(空)' || data.model === '(空)') {
+        html += '<p class="status-error">❌ 缺少 provider 或 model 配置</p>'
+        log('localStorage 中缺少配置数据', 'error')
+      } else {
+        html += '<p class="status-ok">✅ localStorage 中有配置数据</p>'
+        log(`localStorage 配置: ${data.provider} / ${data.model}`, 'success')
+      }
+
+      statusEl.innerHTML = html
+    }
+
+    function clearLocalStorage() {
+      Object.values(KEYS).forEach(key => {
+        localStorage.removeItem(key)
+      })
+      document.getElementById('localStorage-status').innerHTML = '<p class="status-warning">⚠️ localStorage 已清空</p>'
+      log('localStorage 已清空', 'warning')
+    }
+
+    async function testBackendAPI() {
+      const statusEl = document.getElementById('backend-status')
+      log('测试后端 API 连接...', 'info')
+
+      try {
+        // 先尝试访问登录页面获取认证状态
+        const loginResponse = await fetch('http://localhost:8888/api/auth/config')
+
+        if (loginResponse.ok) {
+          const loginData = await loginResponse.json()
+          log(`后端认证配置: ${JSON.stringify(loginData)}`, 'success')
+
+          // 尝试获取设置（可能需要认证）
+          try {
+            const settingsResponse = await fetch('http://localhost:8888/api/settings/', {
+              headers: {
+                'Content-Type': 'application/json'
+              }
+            })
+
+            if (settingsResponse.ok) {
+              const settingsData = await settingsResponse.json()
+              statusEl.innerHTML = `<p class="status-ok">✅ 后端 API 正常，获取到 ${settingsData.providers?.length || 0} 个提供商</p>`
+              log(`成功获取设置数据: ${JSON.stringify(settingsData).substring(0, 200)}...`, 'success')
+            } else {
+              statusEl.innerHTML = `<p class="status-warning">⚠️ 后端 API 需要认证 (${settingsResponse.status})</p>`
+              log(`需要认证: ${settingsResponse.status}`, 'warning')
+            }
+          } catch (settingsError) {
+            statusEl.innerHTML = `<p class="status-error">❌ 设置 API 失败: ${settingsError.message}</p>`
+            log(`设置 API 错误: ${settingsError.message}`, 'error')
+          }
+        } else {
+          statusEl.innerHTML = `<p class="status-error">❌ 后端认证 API 失败 (${loginResponse.status})</p>`
+          log(`认证 API 失败: ${loginResponse.status}`, 'error')
+        }
+      } catch (error) {
+        statusEl.innerHTML = `<p class="status-error">❌ 后端连接失败: ${error.message}</p>`
+        log(`后端连接失败: ${error.message}`, 'error')
+      }
+    }
+
+    async function simulateProviderStore() {
+      const statusEl = document.getElementById('provider-status')
+      log('模拟 providerStore 初始化过程...', 'info')
+
+      try {
+        // 1. 从 localStorage 读取选择
+        const savedProviderId = localStorage.getItem('yprompt_selected_provider') || ''
+        const savedModelId = localStorage.getItem('yprompt_selected_model') || ''
+        log(`从 localStorage 恢复: ${savedProviderId} / ${savedModelId}`, 'info')
+
+        // 2. 模拟从后端加载配置
+        const settingsResponse = await fetch('http://localhost:8888/api/settings/')
+        let providers = []
+
+        if (settingsResponse.ok) {
+          const settings = await settingsResponse.json()
+          providers = settings.providers || []
+          log(`从后端加载了 ${providers.length} 个提供商`, 'success')
+        } else {
+          // 模拟 .setting.json 内容
+          providers = [
+            {
+              id: "DeepSeek",
+              name: "DeepSeek-Offical",
+              type: "openai",
+              apiKey: "sk-c092ab16b28f4860910202f8fb9cd480",
+              baseUrl: "https://api.deepseek.com/v1",
+              models: [
+                { id: "deepseek-chat", name: "deepseek-chat", apiType: "openai" },
+                { id: "deepseek-reasoner", name: "deepseek-reasoner", apiType: "openai" }
+              ]
+            }
+          ]
+          log('使用模拟配置数据', 'warning')
+        }
+
+        // 3. 模拟 providerStore 的逻辑
+        const enabledProviders = providers.filter(p => p.apiKey)
+        log(`启用的提供商: ${enabledProviders.length}`, 'info')
+
+        let currentProvider = null
+        let currentModel = null
+
+        if (enabledProviders.length > 0) {
+          const firstProvider = enabledProviders[0]
+
+          if (!savedProviderId) {
+            // 首次使用，选择第一个
+            currentProvider = firstProvider
+            localStorage.setItem('yprompt_selected_provider', firstProvider.id)
+            log(`首次使用，自动选择第一个提供商: ${firstProvider.name}`, 'success')
+          } else {
+            // 查找保存的提供商
+            currentProvider = enabledProviders.find(p => p.id === savedProviderId) || firstProvider
+            log(`恢复提供商选择: ${currentProvider.name}`, 'info')
+          }
+
+          // 处理模型选择
+          if (currentProvider.models.length > 0) {
+            if (!savedModelId || !currentProvider.models.find(m => m.id === savedModelId)) {
+              currentModel = currentProvider.models[0]
+              localStorage.setItem('yprompt_selected_model', currentModel.id)
+              log(`自动选择模型: ${currentModel.name}`, 'success')
+            } else {
+              currentModel = currentProvider.models.find(m => m.id === savedModelId)
+              log(`恢复模型选择: ${currentModel.name}`, 'info')
+            }
+          }
+        }
+
+        // 4. 显示结果
+        const resultHtml = currentProvider && currentModel
+          ? `<p class="status-ok">✅ 模拟成功: ${currentProvider.name} / ${currentModel.name}</p>`
+          : `<p class="status-error">❌ 模拟失败: 没有可用的提供商或模型</p>`
+
+        statusEl.innerHTML = resultHtml + '<pre>' + JSON.stringify({
+          providersCount: providers.length,
+          enabledProviders: enabledProviders.length,
+          currentProvider: currentProvider?.name || null,
+          currentModel: currentModel?.name || null
+        }, null, 2) + '</pre>'
+
+        log(`模拟完成: ${currentProvider?.name || 'null'} / ${currentModel?.name || 'null'}`, currentProvider ? 'success' : 'error')
+
+      } catch (error) {
+        statusEl.innerHTML = `<p class="status-error">❌ 模拟失败: ${error.message}</p>`
+        log(`模拟失败: ${error.message}`, 'error')
+      }
+    }
+
+    async function runFullTest() {
+      const outputEl = document.getElementById('test-output')
+      outputEl.innerHTML = '<p>🔄 运行完整测试流程...</p>'
+
+      log('🚀 开始完整测试流程', 'info')
+
+      // 1. 清空并重新设置
+      clearLocalStorage()
+      await new Promise(resolve => setTimeout(resolve, 100))
+
+      // 2. 模拟首次使用
+      await simulateProviderStore()
+      await new Promise(resolve => setTimeout(resolve, 100))
+
+      // 3. 检查状态
+      checkLocalStorage()
+
+      // 4. 总结
+      const savedProvider = localStorage.getItem('yprompt_selected_provider')
+      const savedModel = localStorage.getItem('yprompt_selected_model')
+
+      if (savedProvider && savedModel) {
+        outputEl.innerHTML = `
+          <p class="status-ok">✅ 完整测试通过</p>
+          <p>配置结果: ${savedProvider} / ${savedModel}</p>
+          <button onclick="window.open('/', '_blank')" style="background: #10b981;">测试主应用</button>
+        `
+        log('完整测试通过！配置已正确设置', 'success')
+      } else {
+        outputEl.innerHTML = `<p class="status-error">❌ 完整测试失败，配置未正确设置</p>`
+        log('完整测试失败', 'error')
+      }
+    }
+
+    // 页面加载时自动检查
+    window.addEventListener('DOMContentLoaded', () => {
+      log('🚀 调试页面加载完成', 'info')
+      checkLocalStorage()
+    })
+  </script>
+</body>
+</html>

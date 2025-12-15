@@ -1,5 +1,5 @@
 import { defineConfig, Plugin } from 'vite'
-import vue from '@vitejs/plugin-vue'
+import react from '@vitejs/plugin-react'
 import { resolve } from 'path'
 import fs from 'fs'
 import { execSync } from 'child_process'
@@ -27,23 +27,34 @@ function gitCommitPlugin(): Plugin {
 
 export default defineConfig({
   plugins: [
-    vue(),
+    react(),
     gitCommitPlugin()
   ],
   resolve: {
     alias: {
-      '@': resolve(__dirname, 'src'),
-      vue: 'vue/dist/vue.esm-bundler.js'
+      '@': resolve(__dirname, 'src')
+    },
+    extensions: ['.tsx', '.ts', '.jsx', '.js']
+  },
+  build: {
+    rollupOptions: {
+      input: {
+        main: resolve(__dirname, 'index.html')
+      }
     }
   },
   server: {
     proxy: {
       '/api': {
-        target: 'http://localhost:8002',
+        target: 'http://localhost:8888',
         changeOrigin: true,
         secure: false
       }
     }
+  },
+  esbuild: {
+    // 保持代码的可读性以便调试
+    minify: false
   },
   define: {
   }

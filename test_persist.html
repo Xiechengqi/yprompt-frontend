@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>localStorage 持久化测试</title>
+  <style>
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      max-width: 800px;
+      margin: 50px auto;
+      padding: 20px;
+      background: #f5f5f5;
+    }
+    .container {
+      background: white;
+      padding: 30px;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    h1 {
+      color: #4F46E5;
+      margin-bottom: 20px;
+    }
+    .section {
+      margin-bottom: 20px;
+      padding: 15px;
+      background: #f9fafb;
+      border-radius: 6px;
+    }
+    button {
+      background: #4F46E5;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 6px;
+      cursor: pointer;
+      margin-right: 10px;
+      margin-bottom: 10px;
+    }
+    button:hover {
+      background: #4338CA;
+    }
+    button.danger {
+      background: #EF4444;
+    }
+    button.danger:hover {
+      background: #DC2626;
+    }
+    pre {
+      background: #1e1e1e;
+      color: #d4d4d4;
+      padding: 15px;
+      border-radius: 6px;
+      overflow-x: auto;
+    }
+    .status {
+      margin-top: 10px;
+      padding: 10px;
+      border-radius: 4px;
+    }
+    .status.success {
+      background: #d1fae5;
+      color: #065f46;
+    }
+    .status.error {
+      background: #fee2e2;
+      color: #991b1b;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>📦 localStorage 持久化测试</h1>
+
+    <div class="section">
+      <h3>当前 localStorage 内容：</h3>
+      <pre id="current-storage"></pre>
+    </div>
+
+    <div class="section">
+      <h3>操作：</h3>
+      <button onclick="testSave()">保存测试数据</button>
+      <button onclick="testRead()">读取数据</button>
+      <button onclick="testClear()" class="danger">清空数据</button>
+      <button onclick="refreshPage()">刷新页面</button>
+      <div id="status"></div>
+    </div>
+
+    <div class="section">
+      <h3>操作日志：</h3>
+      <pre id="log"></pre>
+    </div>
+  </div>
+
+  <script>
+    const KEYS = {
+      provider: 'yprompt_selected_provider',
+      model: 'yprompt_selected_model',
+      stream: 'yprompt_stream_mode',
+      apiKeys: 'yprompt_show_api_keys'
+    }
+
+    function log(message) {
+      const logEl = document.getElementById('log')
+      const timestamp = new Date().toLocaleTimeString()
+      logEl.textContent += `[${timestamp}] ${message}\n`
+      logEl.scrollTop = logEl.scrollHeight
+    }
+
+    function showStatus(message, type = 'success') {
+      const statusEl = document.getElementById('status')
+      statusEl.className = `status ${type}`
+      statusEl.textContent = message
+    }
+
+    function updateDisplay() {
+      const currentStorage = {}
+      Object.entries(KEYS).forEach(([key, storageKey]) => {
+        const value = localStorage.getItem(storageKey)
+        currentStorage[key] = value || '(空)'
+      })
+
+      document.getElementById('current-storage').textContent =
+        JSON.stringify(currentStorage, null, 2)
+    }
+
+    function testSave() {
+      try {
+        localStorage.setItem(KEYS.provider, 'DeepSeek')
+        localStorage.setItem(KEYS.model, 'deepseek-chat')
+        localStorage.setItem(KEYS.stream, 'true')
+        localStorage.setItem(KEYS.apiKeys, 'false')
+
+        log('✅ 成功保存测试数据')
+        showStatus('数据已保存到 localStorage', 'success')
+        updateDisplay()
+      } catch (error) {
+        log(`❌ 保存失败: ${error.message}`)
+        showStatus(`保存失败: ${error.message}`, 'error')
+      }
+    }
+
+    function testRead() {
+      try {
+        const data = {
+          provider: localStorage.getItem(KEYS.provider),
+          model: localStorage.getItem(KEYS.model),
+          stream: localStorage.getItem(KEYS.stream),
+          apiKeys: localStorage.getItem(KEYS.apiKeys)
+        }
+
+        log(`📖 读取数据: ${JSON.stringify(data, null, 2)}`)
+        showStatus('数据读取成功', 'success')
+        updateDisplay()
+      } catch (error) {
+        log(`❌ 读取失败: ${error.message}`)
+        showStatus(`读取失败: ${error.message}`, 'error')
+      }
+    }
+
+    function testClear() {
+      try {
+        Object.values(KEYS).forEach(key => {
+          localStorage.removeItem(key)
+        })
+
+        log('🗑️  已清空所有数据')
+        showStatus('数据已清空', 'success')
+        updateDisplay()
+      } catch (error) {
+        log(`❌ 清空失败: ${error.message}`)
+        showStatus(`清空失败: ${error.message}`, 'error')
+      }
+    }
+
+    function refreshPage() {
+      log('🔄 即将刷新页面...')
+      setTimeout(() => {
+        location.reload()
+      }, 500)
+    }
+
+    // 页面加载时执行
+    window.addEventListener('DOMContentLoaded', () => {
+      log('🚀 页面加载完成')
+      updateDisplay()
+    })
+  </script>
+</body>
+</html>

@@ -1,5 +1,4 @@
-import { defineStore } from 'pinia'
-import { ref } from 'vue'
+import { create } from 'zustand'
 
 export interface Notification {
   id: string
@@ -8,59 +7,60 @@ export interface Notification {
   duration?: number
 }
 
-export const useNotificationStore = defineStore('notification', () => {
-  const notifications = ref<Notification[]>([])
+interface NotificationState {
+  notifications: Notification[]
+  addNotification: (notification: Omit<Notification, 'id'>) => string
+  removeNotification: (id: string) => void
+  success: (message: string, duration?: number) => string
+  error: (message: string, duration?: number) => string
+  warning: (message: string, duration?: number) => string
+  info: (message: string, duration?: number) => string
+}
 
-  const addNotification = (notification: Omit<Notification, 'id'>) => {
+export const useNotificationStore = create<NotificationState>((set, get) => ({
+  notifications: [],
+  
+  addNotification: (notification: Omit<Notification, 'id'>) => {
     const id = Date.now().toString()
     const newNotification: Notification = {
       id,
       ...notification,
-      duration: notification.duration ?? 3000, // 如果没有传递duration或为undefined，使用默认值3000
+      duration: notification.duration ?? 3000,
     }
     
-    notifications.value.push(newNotification)
-
+    set((state) => ({
+      notifications: [...state.notifications, newNotification]
+    }))
+    
     // 自动移除通知
     if (newNotification.duration && newNotification.duration > 0) {
       setTimeout(() => {
-        removeNotification(id)
+        get().removeNotification(id)
       }, newNotification.duration)
     }
-
+    
     return id
+  },
+  
+  removeNotification: (id: string) => {
+    set((state) => ({
+      notifications: state.notifications.filter(n => n.id !== id)
+    }))
+  },
+  
+  success: (message: string, duration?: number) => {
+    return get().addNotification({ message, type: 'success', duration })
+  },
+  
+  error: (message: string, duration?: number) => {
+    return get().addNotification({ message, type: 'error', duration })
+  },
+  
+  warning: (message: string, duration?: number) => {
+    return get().addNotification({ message, type: 'warning', duration })
+  },
+  
+  info: (message: string, duration?: number) => {
+    return get().addNotification({ message, type: 'info', duration })
   }
-
-  const removeNotification = (id: string) => {
-    const index = notifications.value.findIndex(n => n.id === id)
-    if (index > -1) {
-      notifications.value.splice(index, 1)
-    }
-  }
-
-  const success = (message: string, duration?: number) => {
-    return addNotification({ message, type: 'success', duration })
-  }
-
-  const error = (message: string, duration?: number) => {
-    return addNotification({ message, type: 'error', duration })
-  }
-
-  const warning = (message: string, duration?: number) => {
-    return addNotification({ message, type: 'warning', duration })
-  }
-
-  const info = (message: string, duration?: number) => {
-    return addNotification({ message, type: 'info', duration })
-  }
-
-  return {
-    notifications,
-    addNotification,
-    removeNotification,
-    success,
-    error,
-    warning,
-    info
-  }
-})
+}))

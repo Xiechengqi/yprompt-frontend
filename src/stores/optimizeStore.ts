@@ -1,5 +1,4 @@
-import { defineStore } from 'pinia'
-import { ref, computed } from 'vue'
+import { create } from 'zustand'
 
 // 类型定义
 export interface Suggestion {
@@ -29,6 +28,7 @@ export interface PromptAnalysis {
   language: 'zh' | 'en'
   word_count: number
   estimated_tokens: number
+  issues?: string[]
 }
 
 export interface Version {
@@ -77,247 +77,243 @@ export interface SingleTestResult {
   model: string
 }
 
-export interface ModelTestConfig {
-  provider: string
-  modelId: string
-  temperature: number
-  maxTokens: number
-  promptVersion: 'original' | 'optimized'
-}
-
-export const useOptimizeStore = defineStore('optimize', () => {
+interface OptimizeState {
   // 输入状态
-  const systemPrompt = ref('')
-  const userPrompt = ref('')
-  const importedPromptId = ref<string | null>(null)
-  const loadedPromptId = ref<number | null>(null)  // 从库中加载的提示词ID
+  systemPrompt: string
+  userPrompt: string
+  importedPromptId: string | null
+  loadedPromptId: number | null
 
   // 分析状态
-  const analysis = ref<PromptAnalysis | null>(null)
-  const isAnalyzing = ref(false)
+  analysis: PromptAnalysis | null
+  isAnalyzing: boolean
 
   // 优化状态
-  const suggestions = ref<Suggestion[]>([])
-  const selectedSuggestions = ref<string[]>([])
-  const optimizedPrompts = ref({
-    system: '',
-    user: ''
-  })
-  const isGeneratingSuggestions = ref(false)
-  const isApplyingSuggestions = ref(false)
+  suggestions: Suggestion[]
+  selectedSuggestions: string[]
+  optimizedPrompts: {
+    system: string
+    user: string
+  }
+  isGeneratingSuggestions: boolean
+  isApplyingSuggestions: boolean
 
   // 版本管理
-  const versions = ref<Version[]>([])
-  const currentVersion = ref<string>('original')
-  const isVersionLoading = ref(false)
+  versions: Version[]
+  currentVersion: string
+  isVersionLoading: boolean
 
   // 测试状态
-  const testCases = ref<string[]>([])
-  const currentTestCase = ref('')
-  const testResults = ref<TestResult[]>([])
-  const isTesting = ref(false)
+  testCases: string[]
+  currentTestCase: string
+  testResults: TestResult[]
+  isTesting: boolean
 
   // UI 状态
-  const activeTab = ref<'input' | 'optimize' | 'test'>('input')
-  const showDiffView = ref(false)
-  const showVersionHistory = ref(false)
-
-  // 计算属性
-  const hasPromptContent = computed(() => 
-    systemPrompt.value.trim() || userPrompt.value.trim()
-  )
-
-  const hasOptimizedPrompt = computed(() => 
-    optimizedPrompts.value.system.trim() || optimizedPrompts.value.user.trim()
-  )
-
-  const selectedSuggestionObjects = computed(() => 
-    suggestions.value.filter(s => selectedSuggestions.value.includes(s.id))
-  )
-
-  const currentVersionData = computed(() => 
-    versions.value.find(v => v.version === currentVersion.value)
-  )
+  activeTab: 'input' | 'optimize' | 'test'
+  showDiffView: boolean
+  showVersionHistory: boolean
 
   // Actions
-  const resetOptimization = () => {
-    systemPrompt.value = ''
-    userPrompt.value = ''
-    importedPromptId.value = null
-    loadedPromptId.value = null
-    analysis.value = null
-    suggestions.value = []
-    selectedSuggestions.value = []
-    optimizedPrompts.value = { system: '', user: '' }
-    versions.value = []
-    currentVersion.value = 'original'
-    testCases.value = []
-    testResults.value = []
-    activeTab.value = 'input'
-  }
+  resetOptimization: () => void
+  setPrompts: (system: string, user: string, promptId?: string) => void
+  setLoadedPromptId: (promptId: number | null) => void
+  setAnalysis: (analysisData: PromptAnalysis) => void
+  setSuggestions: (suggestionsData: Suggestion[]) => void
+  toggleSuggestion: (suggestionId: string) => void
+  selectAllSuggestions: () => void
+  deselectAllSuggestions: () => void
+  setOptimizedPrompts: (system: string, user: string) => void
+  addTestCase: (testCase: string) => void
+  setCurrentTestCase: (testCase: string) => void
+  setTestResults: (results: TestResult[]) => void
+  switchTab: (tab: 'input' | 'optimize' | 'test') => void
+  toggleDiffView: () => void
+  toggleVersionHistory: () => void
+  switchVersion: (version: string) => void
+}
 
-  const setPrompts = (system: string, user: string, promptId?: string) => {
-    systemPrompt.value = system
-    userPrompt.value = user
-    if (promptId) {
-      importedPromptId.value = promptId
-    }
-  }
+export const useOptimizeStore = create<OptimizeState>((set, get) => ({
+  // State
+  systemPrompt: '',
+  userPrompt: '',
+  importedPromptId: null,
+  loadedPromptId: null,
+  analysis: null,
+  isAnalyzing: false,
+  suggestions: [],
+  selectedSuggestions: [],
+  optimizedPrompts: {
+    system: '',
+    user: ''
+  },
+  isGeneratingSuggestions: false,
+  isApplyingSuggestions: false,
+  versions: [],
+  currentVersion: 'original',
+  isVersionLoading: false,
+  testCases: [],
+  currentTestCase: '',
+  testResults: [],
+  isTesting: false,
+  activeTab: 'input',
+  showDiffView: false,
+  showVersionHistory: false,
 
-  const setLoadedPromptId = (promptId: number | null) => {
-    loadedPromptId.value = promptId
-  }
+  // Actions
+  resetOptimization: () => {
+    set({
+      systemPrompt: '',
+      userPrompt: '',
+      importedPromptId: null,
+      loadedPromptId: null,
+      analysis: null,
+      suggestions: [],
+      selectedSuggestions: [],
+      optimizedPrompts: { system: '', user: '' },
+      versions: [],
+      currentVersion: 'original',
+      testCases: [],
+      testResults: [],
+      activeTab: 'input'
+    })
+  },
 
-  const setAnalysis = (analysisData: PromptAnalysis) => {
-    analysis.value = analysisData
-  }
-
-  const setSuggestions = (suggestionsData: Suggestion[]) => {
-    suggestions.value = suggestionsData
-    // 默认选中所有建议
-    selectedSuggestions.value = suggestionsData.map(s => s.id)
-  }
-
-  const toggleSuggestion = (suggestionId: string) => {
-    const index = selectedSuggestions.value.indexOf(suggestionId)
-    if (index > -1) {
-      selectedSuggestions.value.splice(index, 1)
-    } else {
-      selectedSuggestions.value.push(suggestionId)
-    }
-  }
-
-  const selectAllSuggestions = () => {
-    selectedSuggestions.value = suggestions.value.map(s => s.id)
-  }
-
-  const deselectAllSuggestions = () => {
-    selectedSuggestions.value = []
-  }
-
-  const setOptimizedPrompts = (system: string, user: string) => {
-    optimizedPrompts.value = { system, user }
-    // 自动创建一个新版本
-    const newVersion: Version = {
-      id: `v_${Date.now()}`,
-      version: `V${versions.value.length + 1}`,
+  setPrompts: (system: string, user: string, promptId?: string) => {
+    set({
       systemPrompt: system,
       userPrompt: user,
-      changes: generateChanges(systemPrompt.value, system, userPrompt.value, user),
-      appliedSuggestions: [...selectedSuggestions.value],
+      importedPromptId: promptId || null
+    })
+  },
+
+  setLoadedPromptId: (promptId: number | null) => {
+    set({ loadedPromptId: promptId })
+  },
+
+  setAnalysis: (analysisData: PromptAnalysis) => {
+    set({ analysis: analysisData })
+  },
+
+  setSuggestions: (suggestionsData: Suggestion[]) => {
+    set({
+      suggestions: suggestionsData,
+      selectedSuggestions: suggestionsData.map((s) => s.id)
+    })
+  },
+
+  toggleSuggestion: (suggestionId: string) => {
+    const state = get()
+    const index = state.selectedSuggestions.indexOf(suggestionId)
+    if (index > -1) {
+      set({
+        selectedSuggestions: state.selectedSuggestions.filter((id) => id !== suggestionId)
+      })
+    } else {
+      set({
+        selectedSuggestions: [...state.selectedSuggestions, suggestionId]
+      })
+    }
+  },
+
+  selectAllSuggestions: () => {
+    const state = get()
+    set({
+      selectedSuggestions: state.suggestions.map((s) => s.id)
+    })
+  },
+
+  deselectAllSuggestions: () => {
+    set({ selectedSuggestions: [] })
+  },
+
+  setOptimizedPrompts: (system: string, user: string) => {
+    const state = get()
+    const newVersion: Version = {
+      id: `v_${Date.now()}`,
+      version: `V${state.versions.length + 1}`,
+      systemPrompt: system,
+      userPrompt: user,
+      changes: generateChanges(state.systemPrompt, system, state.userPrompt, user),
+      appliedSuggestions: [...state.selectedSuggestions],
       createdAt: new Date(),
       tag: 'draft'
     }
-    versions.value.push(newVersion)
-    currentVersion.value = newVersion.version
-  }
+    set({
+      optimizedPrompts: { system, user },
+      versions: [...state.versions, newVersion],
+      currentVersion: newVersion.version
+    })
+  },
 
-  const generateChanges = (oldSystem: string, newSystem: string, oldUser: string, newUser: string): Change[] => {
-    const changes: Change[] = []
-    
-    // 简单的变化检测（实际应用中可以使用更复杂的diff算法）
-    if (oldSystem !== newSystem) {
-      changes.push({
-        type: 'modify',
-        field: 'system',
-        content: newSystem
+  addTestCase: (testCase: string) => {
+    const state = get()
+    if (testCase.trim() && !state.testCases.includes(testCase.trim())) {
+      set({
+        testCases: [...state.testCases, testCase.trim()]
       })
     }
-    
-    if (oldUser !== newUser) {
-      changes.push({
-        type: 'modify', 
-        field: 'user',
-        content: newUser
-      })
-    }
-    
-    return changes
-  }
+  },
 
-  const addTestCase = (testCase: string) => {
-    if (testCase.trim() && !testCases.value.includes(testCase.trim())) {
-      testCases.value.push(testCase.trim())
-    }
-  }
+  setCurrentTestCase: (testCase: string) => {
+    set({ currentTestCase: testCase })
+  },
 
-  const setCurrentTestCase = (testCase: string) => {
-    currentTestCase.value = testCase
-  }
+  setTestResults: (results: TestResult[]) => {
+    set({ testResults: results })
+  },
 
-  const setTestResults = (results: TestResult[]) => {
-    testResults.value = results
-  }
+  switchTab: (tab: 'input' | 'optimize' | 'test') => {
+    set({ activeTab: tab })
+  },
 
-  const switchTab = (tab: 'input' | 'optimize' | 'test') => {
-    activeTab.value = tab
-  }
+  toggleDiffView: () => {
+    set((state) => ({ showDiffView: !state.showDiffView }))
+  },
 
-  const toggleDiffView = () => {
-    showDiffView.value = !showDiffView.value
-  }
+  toggleVersionHistory: () => {
+    set((state) => ({ showVersionHistory: !state.showVersionHistory }))
+  },
 
-  const toggleVersionHistory = () => {
-    showVersionHistory.value = !showVersionHistory.value
-  }
-
-  const switchVersion = (version: string) => {
-    currentVersion.value = version
-    const versionData = versions.value.find(v => v.version === version)
+  switchVersion: (version: string) => {
+    const state = get()
+    const versionData = state.versions.find((v) => v.version === version)
     if (versionData) {
-      optimizedPrompts.value = {
-        system: versionData.systemPrompt,
-        user: versionData.userPrompt
-      }
+      set({
+        currentVersion: version,
+        optimizedPrompts: {
+          system: versionData.systemPrompt,
+          user: versionData.userPrompt
+        }
+      })
     }
   }
+}))
 
-  return {
-    // State
-    systemPrompt,
-    userPrompt,
-    importedPromptId,
-    loadedPromptId,
-    analysis,
-    isAnalyzing,
-    suggestions,
-    selectedSuggestions,
-    optimizedPrompts,
-    isGeneratingSuggestions,
-    isApplyingSuggestions,
-    versions,
-    currentVersion,
-    isVersionLoading,
-    testCases,
-    currentTestCase,
-    testResults,
-    isTesting,
-    activeTab,
-    showDiffView,
-    showVersionHistory,
+// 辅助函数
+function generateChanges(
+  oldSystem: string,
+  newSystem: string,
+  oldUser: string,
+  newUser: string
+): Change[] {
+  const changes: Change[] = []
 
-    // Computed
-    hasPromptContent,
-    hasOptimizedPrompt,
-    selectedSuggestionObjects,
-    currentVersionData,
-
-    // Actions
-    resetOptimization,
-    setPrompts,
-    setLoadedPromptId,
-    setAnalysis,
-    setSuggestions,
-    toggleSuggestion,
-    selectAllSuggestions,
-    deselectAllSuggestions,
-    setOptimizedPrompts,
-    addTestCase,
-    setCurrentTestCase,
-    setTestResults,
-    switchTab,
-    toggleDiffView,
-    toggleVersionHistory,
-    switchVersion
+  if (oldSystem !== newSystem) {
+    changes.push({
+      type: 'modify',
+      field: 'system',
+      content: newSystem
+    })
   }
-})
+
+  if (oldUser !== newUser) {
+    changes.push({
+      type: 'modify',
+      field: 'user',
+      content: newUser
+    })
+  }
+
+  return changes
+}
