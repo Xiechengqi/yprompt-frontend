@@ -48,7 +48,7 @@ export default function PlaygroundModule() {
   }
 
   return (
-    <div className="w-full h-full flex flex-col overflow-hidden p-2 playground-container">
+    <div className="w-full flex-1 flex flex-col overflow-hidden p-2 playground-container min-h-0">
       {showSystemPromptModal && (
         <SystemPromptModal
           isOpen={showSystemPromptModal}

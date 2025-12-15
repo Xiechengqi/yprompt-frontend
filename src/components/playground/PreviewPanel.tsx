@@ -454,7 +454,7 @@ export default function PreviewPanel({ artifact }: PreviewPanelProps) {
   return (
     <div
       ref={mainContainerRef}
-      className="flex flex-col h-full bg-[#f8f9fa] select-none outline-none"
+      className="flex flex-col flex-1 min-h-0 bg-[#f8f9fa] select-none outline-none"
       tabIndex={0}
     >
       {/* Header with Tabs & Actions */}
@@ -616,7 +616,7 @@ export default function PreviewPanel({ artifact }: PreviewPanelProps) {
             ></div>
 
             {/* Device Container Wrapper */}
-            <div className="relative bg-white shadow-xl transition-all duration-300 ease-in-out z-10 border border-gray-300 overflow-hidden flex-shrink-0 w-full h-full max-w-[98%] rounded-lg">
+            <div className="relative bg-white shadow-xl transition-all duration-300 ease-in-out z-10 border border-gray-300 overflow-hidden flex-shrink-0 w-full flex-1 min-h-0 max-w-[98%] rounded-lg">
               {/* HTML */}
               {artifact.type === 'html' && (
                 <iframe
@@ -718,7 +718,7 @@ export default function PreviewPanel({ artifact }: PreviewPanelProps) {
 
         {/* Code Tab (Editable) */}
         {activeTab === 'code' && (
-          <div className="flex-1 h-full bg-[#f9fafb] overflow-hidden flex flex-col relative z-20">
+          <div className="flex-1 min-h-0 bg-[#f9fafb] overflow-hidden flex flex-col relative z-20">
             <textarea
               value={localContent}
               onChange={(e) => setLocalContent(e.target.value)}

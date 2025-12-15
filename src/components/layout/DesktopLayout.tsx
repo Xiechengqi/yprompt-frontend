@@ -25,7 +25,7 @@ export default function DesktopLayout({ children }: DesktopLayoutProps) {
         </div>
 
         {/* Footer Git Commit Section */}
-        <div className="footer-container mt-auto">
+        <div className="footer-container mt-auto flex justify-center items-center">
           <GitCommit />
         </div>
       </div>

@@ -177,9 +177,9 @@ export default function PlaygroundApp({ systemPrompt, onOpenSystemPrompt }: Play
   )
 
   return (
-    <div className="w-full h-full flex flex-col">
-      <div className="flex flex-row gap-4 flex-1 min-h-0">
-        <div className="flex-1 min-h-[300px]">
+    <div className="w-full flex-1 flex flex-col overflow-hidden min-h-0">
+      <div className="flex flex-row gap-4 flex-1 min-h-0 overflow-hidden">
+        <div className="flex-1 min-h-0 flex flex-col overflow-hidden">
           <PlaygroundChatPanel
             messages={messages}
             isStreaming={isStreaming}
@@ -192,7 +192,7 @@ export default function PlaygroundApp({ systemPrompt, onOpenSystemPrompt }: Play
             onOpenSystemPrompt={onOpenSystemPrompt}
           />
         </div>
-        <div className="flex-1 min-h-0 bg-[#f0f4f9] rounded-lg overflow-hidden">
+        <div className="flex-1 min-h-0 flex flex-col bg-[#f0f4f9] rounded-lg overflow-hidden">
           <PreviewPanel artifact={currentArtifact} />
         </div>
       </div>

@@ -76,7 +76,7 @@ export default function FinalTab({
           </button>
         </div>
       </div>
-      <div className="p-3 bg-white flex-1 flex flex-col overflow-hidden">
+      <div className="p-3 bg-white flex-1 flex flex-col min-h-0 overflow-hidden">
         <div className="mb-2 flex items-center justify-between flex-shrink-0">
           <div className="flex items-center space-x-2">
             <button
@@ -108,7 +108,7 @@ export default function FinalTab({
           value={generatedPrompt}
           onChange={(e) => setGeneratedPrompt(e.target.value)}
           placeholder="最终提示词将在这里显示..."
-          className="w-full flex-1 px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:border-gray-300 focus:ring-0 resize-none"
+          className="w-full flex-1 min-h-0 px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:border-gray-300 focus:ring-0 resize-none"
         />
       </div>
     </div>

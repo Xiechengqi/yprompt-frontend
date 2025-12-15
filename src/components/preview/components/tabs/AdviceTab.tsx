@@ -77,8 +77,8 @@ export default function AdviceTab({
           </button>
         </div>
       </div>
-      <div className="bg-white flex flex-col p-3 flex-1">
-        <div ref={scrollContainerRef} className="space-y-2 overflow-y-auto flex-1" style={{ maxHeight: 'calc(100vh - 400px)' }}>
+      <div className="bg-white flex flex-col p-3 flex-1 min-h-0 overflow-hidden">
+        <div ref={scrollContainerRef} className="space-y-2 overflow-y-auto flex-1 min-h-0">
           {advice.map((item, index) => (
             <div key={index} className="flex items-start">
               <span className="text-yellow-500 mr-2 mt-2">•</span>

@@ -119,7 +119,7 @@ export default function PlaygroundChatPanel({
   }
 
   return (
-    <div className="bg-white rounded-lg shadow-sm flex flex-col h-full overflow-hidden border border-gray-100">
+    <div className="bg-white rounded-lg shadow-sm flex flex-col flex-1 min-h-0 overflow-hidden border border-gray-100">
       {/* Header */}
       <div className="p-4 border-b border-gray-200 flex items-center justify-between flex-shrink-0">
         <h4 className="font-semibold text-gray-800">AI对话</h4>

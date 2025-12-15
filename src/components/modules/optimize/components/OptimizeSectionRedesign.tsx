@@ -601,8 +601,8 @@ export default function OptimizeSectionRedesign({
   return (
     <div className="w-full h-full min-h-0 overflow-hidden flex flex-row gap-4">
       {/* 输入区 */}
-      <div className="flex flex-col flex-1 min-h-0">
-        <div className="bg-white rounded-lg shadow-sm flex flex-col h-full p-4 min-h-0 overflow-hidden">
+      <div className="flex flex-col flex-1 min-h-0 overflow-hidden">
+        <div className="bg-white rounded-lg shadow-sm flex flex-col flex-1 min-h-0 p-4 overflow-hidden">
           <div className="mb-4 flex-shrink-0 flex items-center justify-between">
             <div>
               <h4 className="text-base font-semibold text-gray-800 mb-2">系统提示词</h4>
@@ -618,14 +618,14 @@ export default function OptimizeSectionRedesign({
           </div>
 
           {/* 文本输入区域 */}
-          <div className="flex-1 flex flex-col min-h-0">
+          <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
             <textarea
               value={localSystemPrompt}
               onChange={(e) => setLocalSystemPrompt(e.target.value)}
               placeholder="在此输入系统提示词...
 
 例如：你是一个专业的英语老师"
-              className="w-full h-full p-3 border border-gray-300 rounded-lg focus:outline-none resize-none text-sm"
+              className="w-full flex-1 p-3 border border-gray-300 rounded-lg focus:outline-none resize-none text-sm min-h-0"
             />
 
             <div className="flex items-center justify-between text-xs text-gray-500 mt-2 flex-shrink-0">
@@ -658,8 +658,8 @@ export default function OptimizeSectionRedesign({
       </div>
 
       {/* 预览区 */}
-      <div className="flex flex-col flex-1 min-h-0">
-        <div className="bg-white rounded-lg shadow-sm flex flex-col h-full min-h-0 overflow-hidden">
+      <div className="flex flex-col flex-1 min-h-0 overflow-hidden">
+        <div className="bg-white rounded-lg shadow-sm flex flex-col flex-1 min-h-0 overflow-hidden">
           {/* 预览头部 */}
           <div className="p-4 border-b border-gray-200 flex items-center justify-between flex-shrink-0">
             <h4 className="font-semibold text-gray-800">优化预览</h4>
@@ -717,84 +717,86 @@ export default function OptimizeSectionRedesign({
                 )}
               </TabContainer>
 
-              {/* 质量分析 Tab */}
-              {activeOptimizeTab === 'analysis' && (
-                <div className="flex-1 flex flex-col min-h-0">
-                  {isAnalyzing ? (
-                    <div className="flex-1 flex flex-col overflow-hidden">
-                      <div className="flex-1 overflow-y-auto bg-gray-50 rounded-lg p-4">
-                        <pre className="text-xs text-gray-700 whitespace-pre-wrap font-mono">
-                          {analysisStreamingText || 'AI正在分析中...'}
-                        </pre>
+              {/* Tab 内容区域 - 使用 flex-1 确保铺满 */}
+              <div className="flex-1 flex flex-col min-h-0 mt-4">
+                {/* 质量分析 Tab */}
+                {activeOptimizeTab === 'analysis' && (
+                  <div className="flex-1 flex flex-col min-h-0">
+                    {isAnalyzing ? (
+                      <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
+                        <div className="flex-1 overflow-y-auto bg-gray-50 rounded-lg p-4 min-h-0">
+                          <pre className="text-xs text-gray-700 whitespace-pre-wrap font-mono">
+                            {analysisStreamingText || 'AI正在分析中...'}
+                          </pre>
+                        </div>
                       </div>
-                    </div>
-                  ) : systemAnalysisResult ? (
-                    <div className="flex-1 flex flex-col min-h-0">
-                      <div className="flex-1 overflow-y-auto space-y-4 pr-2">
-                        {/* 整体评分 */}
-                        <div className="border border-gray-200 rounded-lg p-4">
-                          <div className="flex items-center justify-between mb-3">
-                            <h4 className="text-sm font-medium text-gray-700">整体评分</h4>
-                            <span className={`text-2xl font-bold ${getScoreClass(systemAnalysisResult.overall_score)}`}>
-                              {systemAnalysisResult.overall_score}/100
-                            </span>
+                    ) : systemAnalysisResult ? (
+                      <div className="flex-1 flex flex-col min-h-0">
+                        <div className="flex-1 overflow-y-auto space-y-4 pr-2 min-h-0">
+                          {/* 整体评分 */}
+                          <div className="border border-gray-200 rounded-lg p-4">
+                            <div className="flex items-center justify-between mb-3">
+                              <h4 className="text-sm font-medium text-gray-700">整体评分</h4>
+                              <span className={`text-2xl font-bold ${getScoreClass(systemAnalysisResult.overall_score)}`}>
+                                {systemAnalysisResult.overall_score}/100
+                              </span>
+                            </div>
+                            <div className="w-full bg-gray-200 rounded-full h-3">
+                              <div
+                                className={`h-3 rounded-full transition-all duration-500 ${getScoreBarClass(
+                                  systemAnalysisResult.overall_score
+                                )}`}
+                                style={{ width: `${systemAnalysisResult.overall_score}%` }}
+                              ></div>
+                            </div>
                           </div>
-                          <div className="w-full bg-gray-200 rounded-full h-3">
-                            <div
-                              className={`h-3 rounded-full transition-all duration-500 ${getScoreBarClass(
-                                systemAnalysisResult.overall_score
-                              )}`}
-                              style={{ width: `${systemAnalysisResult.overall_score}%` }}
-                            ></div>
-                          </div>
+
+                          {/* 详细分析维度 */}
+                          {systemAnalysisResult.analysis && (
+                            <div className="grid grid-cols-2 gap-3">
+                              {Object.entries(systemAnalysisResult.analysis).map(([key, item]: [string, any]) => (
+                                <div key={key} className="border border-gray-200 rounded-lg p-3 hover:shadow-sm transition-shadow">
+                                  <div className="flex items-center justify-between mb-2">
+                                    <span className="text-xs font-medium text-gray-700">{getAnalysisLabel(key)}</span>
+                                    <span className={`text-lg font-bold ${getScoreClass(item.score)}`}>{item.score}</span>
+                                  </div>
+                                  <p className="text-xs text-gray-600">{item.feedback}</p>
+                                </div>
+                              ))}
+                            </div>
+                          )}
                         </div>
 
-                        {/* 详细分析维度 */}
-                        {systemAnalysisResult.analysis && (
-                          <div className="grid grid-cols-2 gap-3">
-                            {Object.entries(systemAnalysisResult.analysis).map(([key, item]: [string, any]) => (
-                              <div key={key} className="border border-gray-200 rounded-lg p-3 hover:shadow-sm transition-shadow">
-                                <div className="flex items-center justify-between mb-2">
-                                  <span className="text-xs font-medium text-gray-700">{getAnalysisLabel(key)}</span>
-                                  <span className={`text-lg font-bold ${getScoreClass(item.score)}`}>{item.score}</span>
-                                </div>
-                                <p className="text-xs text-gray-600">{item.feedback}</p>
-                              </div>
-                            ))}
+                        {/* 手动模式下的执行按钮 */}
+                        {!isAutoMode && systemOptimizationStage === 1 && (
+                          <div className="pt-4 mt-4 border-t border-gray-100 flex justify-end flex-shrink-0">
+                            <button
+                              onClick={handleGenerateAdvice}
+                              disabled={isGeneratingSystem}
+                              className="px-4 py-2 bg-yellow-500 text-white rounded hover:bg-yellow-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center space-x-2"
+                            >
+                              {isGeneratingSystem && (
+                                <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                  <path
+                                    className="opacity-75"
+                                    fill="currentColor"
+                                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                                  ></path>
+                                </svg>
+                              )}
+                              <span>{isGeneratingSystem ? '生成中...' : '生成优化建议'}</span>
+                            </button>
                           </div>
                         )}
                       </div>
+                    ) : null}
+                  </div>
+                )}
 
-                      {/* 手动模式下的执行按钮 */}
-                      {!isAutoMode && systemOptimizationStage === 1 && (
-                        <div className="pt-4 mt-4 border-t border-gray-100 flex justify-end flex-shrink-0">
-                          <button
-                            onClick={handleGenerateAdvice}
-                            disabled={isGeneratingSystem}
-                            className="px-4 py-2 bg-yellow-500 text-white rounded hover:bg-yellow-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center space-x-2"
-                          >
-                            {isGeneratingSystem && (
-                              <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
-                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                                <path
-                                  className="opacity-75"
-                                  fill="currentColor"
-                                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                                ></path>
-                              </svg>
-                            )}
-                            <span>{isGeneratingSystem ? '生成中...' : '生成优化建议'}</span>
-                          </button>
-                        </div>
-                      )}
-                    </div>
-                  ) : null}
-                </div>
-              )}
-
-              {/* 优化建议 Tab */}
-              {activeOptimizeTab === 'advice' && (
-                <AdviceTab
+                {/* 优化建议 Tab */}
+                {activeOptimizeTab === 'advice' && (
+                  <AdviceTab
                   advice={optimizeSuggestionsText}
                   setAdvice={(_newAdvice: string[]) => {
                     // 将字符串数组转换为建议对象数组
@@ -821,11 +823,11 @@ export default function OptimizeSectionRedesign({
                   }}
                   onExecuteFinal={handleExecuteFinalOptimized}
                 />
-              )}
+                )}
 
-              {/* 优化结果 Tab */}
-              {activeOptimizeTab === 'final' && (
-                <FinalTab
+                {/* 优化结果 Tab */}
+                {activeOptimizeTab === 'final' && (
+                  <FinalTab
                   generatedPrompt={currentOptimizedSystemPrompt}
                   setGeneratedPrompt={setCurrentOptimizedSystemPrompt}
                   isExecuting={false}
@@ -849,7 +851,8 @@ export default function OptimizeSectionRedesign({
                   }}
                   onSavePrompt={handleSavePrompt}
                 />
-              )}
+                )}
+              </div>
             </div>
           )}
         </div>

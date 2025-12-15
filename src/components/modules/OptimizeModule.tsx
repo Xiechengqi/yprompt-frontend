@@ -214,7 +214,7 @@ function OptimizeModule() {
   }, []) // 只在挂载时执行一次
 
   return (
-    <div className="w-full h-full flex flex-col overflow-hidden p-2">
+    <div className="w-full flex-1 flex flex-col overflow-hidden p-2 min-h-0">
       {/* 模块特定顶栏 */}
       <div className="bg-white rounded-lg shadow-sm p-4 mb-4 flex-shrink-0">
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
