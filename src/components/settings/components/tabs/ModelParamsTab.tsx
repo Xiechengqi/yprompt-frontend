@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react'
 import { useModelParams } from '../../composables/useModelParams'
 import { useSettingsStore } from '@/stores/settingsStore'
+import { useConfirmDialog } from '@/composables/useConfirmDialog'
+import { useNotificationStore } from '@/stores/notificationStore'
 import type { ModelParams } from '@/stores/settingsStore'
 
 export default function ModelParamsTab() {
@@ -14,6 +16,8 @@ export default function ModelParamsTab() {
     getParamLabel,
     getParamDescription
   } = useModelParams()
+  const { confirm } = useConfirmDialog()
+  const notificationStore = useNotificationStore()
 
   const [params, setParams] = useState<ModelParams>(getCurrentParams())
 
@@ -35,9 +39,16 @@ export default function ModelParamsTab() {
     })
   }
 
-  const handleReset = () => {
-    resetToDefaults()
-    setParams(getCurrentParams())
+  const handleReset = async () => {
+    const confirmed = await confirm({
+      message: '确定要重置模型参数为默认值吗？',
+      type: 'warning'
+    })
+    if (confirmed) {
+      resetToDefaults()
+      setParams(getCurrentParams())
+      notificationStore.success('已重置为默认值', 2000)
+    }
   }
 
   return (
@@ -48,7 +59,7 @@ export default function ModelParamsTab() {
           <h3 className="text-lg font-semibold text-gray-900">模型参数</h3>
           <button
             onClick={handleReset}
-            className="text-sm text-blue-600 hover:text-blue-700 font-medium"
+            className="px-3 py-1.5 text-sm font-medium text-slate-700 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 hover:border-slate-300 transition-all focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
           >
             重置为默认值
           </button>

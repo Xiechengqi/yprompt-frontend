@@ -7,7 +7,9 @@ import {
   Play,
   CheckCircle,
   XCircle,
-  Clock
+  Clock,
+  Eye,
+  EyeOff
 } from 'lucide-react'
 import type { ProviderConfig } from '@/stores/providerStore'
 import { useSettingsStore } from '@/stores/settingsStore'
@@ -53,6 +55,7 @@ export default function ProvidersTab({
     new Map()
   )
   const [showDetailDialog, setShowDetailDialog] = useState(false)
+  const [visibleApiKeys, setVisibleApiKeys] = useState<Set<string>>(new Set())
   const [detailInfo, setDetailInfo] = useState<{
     providerName: string
     modelId: string
@@ -561,31 +564,6 @@ export default function ProvidersTab({
             <span>刷新配置</span>
           </button>
         </div>
-
-        {/* API配置说明 */}
-        <div className="mb-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-          <h4 className="text-sm font-medium text-blue-800 mb-2">API配置说明</h4>
-          <div className="text-sm text-blue-700 space-y-2">
-            <div>
-              <strong>OpenAI及兼容服务：</strong>API URL填写完整路径，如{' '}
-              <code className="bg-blue-100 px-1 rounded break-all text-xs">
-                https://api.openai.com/v1/chat/completions
-              </code>
-            </div>
-            <div>
-              <strong>Anthropic Claude：</strong>API URL填写{' '}
-              <code className="bg-blue-100 px-1 rounded break-all text-xs">
-                https://api.anthropic.com/v1/messages
-              </code>
-            </div>
-            <div>
-              <strong>Google Gemini：</strong>API URL填写{' '}
-              <code className="bg-blue-100 px-1 rounded break-all text-xs">
-                https://generativelanguage.googleapis.com/v1beta
-              </code>
-            </div>
-          </div>
-        </div>
       </div>
 
       {/* Provider 列表 */}
@@ -629,8 +607,35 @@ export default function ProvidersTab({
                     <span className="text-gray-500 w-24 flex-shrink-0">API Key:</span>
                     <div className="flex-1 flex items-center space-x-2">
                       <span className="text-gray-900 font-mono text-xs break-all">
-                        {'********' + provider.apiKey.substring(provider.apiKey.length - 4)}
+                        {provider.apiKey
+                          ? visibleApiKeys.has(provider.id)
+                            ? provider.apiKey
+                            : '********' + provider.apiKey.substring(provider.apiKey.length - 4)
+                          : '未配置'}
                       </span>
+                      {provider.apiKey && (
+                        <button
+                          onClick={() => {
+                            setVisibleApiKeys((prev) => {
+                              const newSet = new Set(prev)
+                              if (newSet.has(provider.id)) {
+                                newSet.delete(provider.id)
+                              } else {
+                                newSet.add(provider.id)
+                              }
+                              return newSet
+                            })
+                          }}
+                          className="flex-shrink-0 p-1 text-gray-500 hover:text-gray-700 transition-colors"
+                          title={visibleApiKeys.has(provider.id) ? '隐藏 API Key' : '显示 API Key'}
+                        >
+                          {visibleApiKeys.has(provider.id) ? (
+                            <EyeOff className="w-4 h-4" />
+                          ) : (
+                            <Eye className="w-4 h-4" />
+                          )}
+                        </button>
+                      )}
                     </div>
                   </div>
                   {provider.baseUrl && (

@@ -105,8 +105,15 @@ const loadDefaultParams = (): ModelParams => {
 
 // 加载默认的提示词规则
 const loadDefaultEditingRules = () => {
+  // 从 localStorage 加载 useSlimRules 状态
+  const savedUseSlimRules = localStorage.getItem('yprompt_use_slim_rules')
+  const useSlimRules = savedUseSlimRules === 'true'
+  
+  // 设置 promptConfigManager 的状态
+  promptConfigManager.setUseSlimRules(useSlimRules)
+  
   return {
-    useSlimRules: false,
+    useSlimRules,
     editingSystemRules: promptConfigManager.getSystemPromptRules(),
     editingUserRules: promptConfigManager.getUserGuidedPromptRules(),
     editingRequirementReportRules: promptConfigManager.getRequirementReportRules(),
@@ -132,8 +139,11 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
   ...loadDefaultEditingRules(),
   setShowSettings: (show: boolean) => set({ showSettings: show }),
   saveSettings: () => {
-    const params = get().globalModelParams
+    const state = get()
+    const params = state.globalModelParams
     localStorage.setItem('yprompt_global_model_params', JSON.stringify(params))
+    // 保存 useSlimRules 状态
+    localStorage.setItem('yprompt_use_slim_rules', String(state.useSlimRules))
   },
   loadSettings: () => {
     const saved = localStorage.getItem('yprompt_global_model_params')
@@ -145,9 +155,26 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
         // 解析失败，使用默认值
       }
     }
+    // 加载 useSlimRules 状态
+    const savedUseSlimRules = localStorage.getItem('yprompt_use_slim_rules')
+    if (savedUseSlimRules !== null) {
+      const useSlimRules = savedUseSlimRules === 'true'
+      // 更新状态并同步 promptConfigManager
+      promptConfigManager.setUseSlimRules(useSlimRules)
+      set({ 
+        useSlimRules,
+        // 根据状态更新编辑中的系统提示词规则
+        editingSystemRules: promptConfigManager.getSystemPromptRules()
+      })
+    }
   },
   openPromptEditor: (_type: string) => {
     // 打开提示词编辑器时的初始化逻辑
-    // 可以在这里加载对应的规则
+    // 确保 editingSystemRules 与当前的 useSlimRules 状态同步
+    const state = get()
+    promptConfigManager.setUseSlimRules(state.useSlimRules)
+    set({ 
+      editingSystemRules: promptConfigManager.getSystemPromptRules()
+    })
   }
 }))

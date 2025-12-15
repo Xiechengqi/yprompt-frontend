@@ -52,8 +52,8 @@ export default function TopNavigation() {
               to={module.path}
               className={`nav-link interactive px-4 py-2 text-sm font-medium rounded transition-all duration-200 relative ${
                 currentModule === module.id
-                  ? 'text-white bg-gradient-to-r from-indigo-600 to-violet-600 shadow-[0_4px_14px_0_rgba(79,70,229,0.3)]'
-                  : 'text-slate-600 hover:text-slate-900 hover:bg-[rgba(79,70,229,0.05)]'
+                  ? 'text-white bg-gradient-to-r from-indigo-600 to-violet-600 shadow-[0_4px_14px_0_rgba(79,70,229,0.3)] hover:from-indigo-500 hover:to-violet-500 hover:shadow-[0_6px_20px_0_rgba(79,70,229,0.4)] hover:text-indigo-900'
+                  : 'text-slate-600 hover:text-indigo-600 hover:bg-indigo-50 hover:font-semibold'
               }`}
               onClick={(e) => {
                 e.preventDefault()

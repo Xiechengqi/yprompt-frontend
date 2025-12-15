@@ -2,6 +2,7 @@ import { useSettingsStore } from '@/stores/settingsStore'
 import { promptConfigManager } from '@/config/prompts'
 import {
   SYSTEM_PROMPT_RULES,
+  SYSTEM_PROMPT_SLIM_RULES,
   USER_GUIDED_PROMPT_RULES,
   REQUIREMENT_REPORT_RULES
 } from '@/config/prompts/index'
@@ -12,54 +13,121 @@ import { OPTIMIZATION_APPLICATION_PROMPT } from '@/config/prompts/optimizationAp
 import { QUALITY_ANALYSIS_SYSTEM_PROMPT } from '@/config/prompts/qualityAnalysis'
 import { USER_PROMPT_OPTIMIZATION_CONFIG } from '@/config/prompts/userPromptOptimization'
 import { USER_PROMPT_QUALITY_ANALYSIS } from '@/config/prompts/userPromptQualityAnalysis'
+import { useConfirmDialog } from '@/composables/useConfirmDialog'
+import { useNotificationStore } from '@/stores/notificationStore'
 
 export function usePromptRules() {
   const settingsStore = useSettingsStore()
+  const { confirm } = useConfirmDialog()
+  const notificationStore = useNotificationStore()
 
-  const resetSystemPromptRules = () => {
-    if (confirm('确定要重置系统提示词规则为默认值吗？')) {
-      settingsStore.editingSystemRules = SYSTEM_PROMPT_RULES
+  const resetSystemPromptRules = async () => {
+    const confirmed = await confirm({
+      message: '确定要重置系统提示词规则为默认值吗？',
+      type: 'warning'
+    })
+    if (confirmed) {
+      useSettingsStore.setState({ editingSystemRules: SYSTEM_PROMPT_RULES })
+      notificationStore.success('已重置为默认值', 2000)
     }
   }
 
-  const resetUserPromptRules = () => {
-    if (confirm('确定要重置用户引导规则为默认值吗？')) {
-      settingsStore.editingUserRules = USER_GUIDED_PROMPT_RULES
+  const resetUserPromptRules = async () => {
+    const confirmed = await confirm({
+      message: '确定要重置用户引导规则为默认值吗？',
+      type: 'warning'
+    })
+    if (confirmed) {
+      useSettingsStore.setState({ editingUserRules: USER_GUIDED_PROMPT_RULES })
+      notificationStore.success('已重置为默认值', 2000)
     }
   }
 
-  const resetRequirementReportRules = () => {
-    if (confirm('确定要重置需求报告规则为默认值吗？')) {
-      settingsStore.editingRequirementReportRules = REQUIREMENT_REPORT_RULES
+  const resetRequirementReportRules = async () => {
+    const confirmed = await confirm({
+      message: '确定要重置需求报告规则为默认值吗？',
+      type: 'warning'
+    })
+    if (confirmed) {
+      useSettingsStore.setState({ editingRequirementReportRules: REQUIREMENT_REPORT_RULES })
+      notificationStore.success('已重置为默认值', 2000)
     }
   }
 
-  const resetThinkingPointsExtractionPrompt = () => {
-    if (confirm('确定要重置关键指令提取规则为默认值吗？')) {
-      settingsStore.editingFinalPromptRules.THINKING_POINTS_EXTRACTION = THINKING_POINTS_EXTRACTION_PROMPT
+  const resetThinkingPointsExtractionPrompt = async () => {
+    const confirmed = await confirm({
+      message: '确定要重置关键指令提取规则为默认值吗？',
+      type: 'warning'
+    })
+    if (confirmed) {
+      useSettingsStore.setState({
+        editingFinalPromptRules: {
+          ...settingsStore.editingFinalPromptRules,
+          THINKING_POINTS_EXTRACTION: THINKING_POINTS_EXTRACTION_PROMPT
+        }
+      })
+      notificationStore.success('已重置为默认值', 2000)
     }
   }
 
-  const resetSystemPromptGenerationPrompt = () => {
-    if (confirm('确定要重置系统提示词生成规则为默认值吗？')) {
-      settingsStore.editingFinalPromptRules.SYSTEM_PROMPT_GENERATION = SYSTEM_PROMPT_GENERATION_PROMPT
+  const resetSystemPromptGenerationPrompt = async () => {
+    const confirmed = await confirm({
+      message: '确定要重置系统提示词生成规则为默认值吗？',
+      type: 'warning'
+    })
+    if (confirmed) {
+      useSettingsStore.setState({
+        editingFinalPromptRules: {
+          ...settingsStore.editingFinalPromptRules,
+          SYSTEM_PROMPT_GENERATION: SYSTEM_PROMPT_GENERATION_PROMPT
+        }
+      })
+      notificationStore.success('已重置为默认值', 2000)
     }
   }
 
-  const resetOptimizationAdvicePrompt = () => {
-    if (confirm('确定要重置优化建议生成规则为默认值吗？')) {
-      settingsStore.editingFinalPromptRules.OPTIMIZATION_ADVICE_GENERATION = OPTIMIZATION_ADVICE_PROMPT
+  const resetOptimizationAdvicePrompt = async () => {
+    const confirmed = await confirm({
+      message: '确定要重置优化建议生成规则为默认值吗？',
+      type: 'warning'
+    })
+    if (confirmed) {
+      useSettingsStore.setState({
+        editingFinalPromptRules: {
+          ...settingsStore.editingFinalPromptRules,
+          OPTIMIZATION_ADVICE_GENERATION: OPTIMIZATION_ADVICE_PROMPT
+        }
+      })
+      notificationStore.success('已重置为默认值', 2000)
     }
   }
 
-  const resetOptimizationApplicationPrompt = () => {
-    if (confirm('确定要重置优化应用规则为默认值吗？')) {
-      settingsStore.editingFinalPromptRules.OPTIMIZATION_APPLICATION = OPTIMIZATION_APPLICATION_PROMPT
+  const resetOptimizationApplicationPrompt = async () => {
+    const confirmed = await confirm({
+      message: '确定要重置优化应用规则为默认值吗？',
+      type: 'warning'
+    })
+    if (confirmed) {
+      useSettingsStore.setState({
+        editingFinalPromptRules: {
+          ...settingsStore.editingFinalPromptRules,
+          OPTIMIZATION_APPLICATION: OPTIMIZATION_APPLICATION_PROMPT
+        }
+      })
+      notificationStore.success('已重置为默认值', 2000)
     }
   }
 
   const handleSlimRulesToggle = () => {
-    settingsStore.useSlimRules = !settingsStore.useSlimRules
+    const newUseSlimRules = !settingsStore.useSlimRules
+    // 更新状态
+    useSettingsStore.setState({ 
+      useSlimRules: newUseSlimRules,
+      // 根据新的状态更新编辑中的系统提示词规则
+      editingSystemRules: newUseSlimRules ? SYSTEM_PROMPT_SLIM_RULES : SYSTEM_PROMPT_RULES
+    })
+    // 更新 promptConfigManager 的状态
+    promptConfigManager.setUseSlimRules(newUseSlimRules)
     settingsStore.saveSettings()
   }
 
@@ -85,21 +153,51 @@ export function usePromptRules() {
     }
   }
 
-  const resetQualityAnalysisSystemPrompt = () => {
-    if (confirm('确定要重置质量分析系统提示词为默认值吗？')) {
-      settingsStore.editingQualityAnalysisRules.systemPrompt = QUALITY_ANALYSIS_SYSTEM_PROMPT
+  const resetQualityAnalysisSystemPrompt = async () => {
+    const confirmed = await confirm({
+      message: '确定要重置质量分析系统提示词为默认值吗？',
+      type: 'warning'
+    })
+    if (confirmed) {
+      useSettingsStore.setState({
+        editingQualityAnalysisRules: {
+          ...settingsStore.editingQualityAnalysisRules,
+          systemPrompt: QUALITY_ANALYSIS_SYSTEM_PROMPT
+        }
+      })
+      notificationStore.success('已重置为默认值', 2000)
     }
   }
 
-  const resetUserPromptQualityAnalysis = () => {
-    if (confirm('确定要重置用户提示词质量分析规则为默认值吗？')) {
-      settingsStore.editingUserPromptOptimizationRules.qualityAnalysis = USER_PROMPT_QUALITY_ANALYSIS
+  const resetUserPromptQualityAnalysis = async () => {
+    const confirmed = await confirm({
+      message: '确定要重置用户提示词质量分析规则为默认值吗？',
+      type: 'warning'
+    })
+    if (confirmed) {
+      useSettingsStore.setState({
+        editingUserPromptOptimizationRules: {
+          ...settingsStore.editingUserPromptOptimizationRules,
+          qualityAnalysis: USER_PROMPT_QUALITY_ANALYSIS
+        }
+      })
+      notificationStore.success('已重置为默认值', 2000)
     }
   }
 
-  const resetUserPromptQuickOptimization = () => {
-    if (confirm('确定要重置用户提示词快速优化规则为默认值吗？')) {
-      settingsStore.editingUserPromptOptimizationRules.quickOptimization = USER_PROMPT_OPTIMIZATION_CONFIG.quick
+  const resetUserPromptQuickOptimization = async () => {
+    const confirmed = await confirm({
+      message: '确定要重置用户提示词快速优化规则为默认值吗？',
+      type: 'warning'
+    })
+    if (confirmed) {
+      useSettingsStore.setState({
+        editingUserPromptOptimizationRules: {
+          ...settingsStore.editingUserPromptOptimizationRules,
+          quickOptimization: USER_PROMPT_OPTIMIZATION_CONFIG.quick
+        }
+      })
+      notificationStore.success('已重置为默认值', 2000)
     }
   }
 

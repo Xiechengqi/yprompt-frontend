@@ -59,21 +59,34 @@ export default function PromptsTab({
               <div className="flex items-center justify-between mb-3">
                 <h3 className="text-lg font-medium">系统提示词规则</h3>
                 <div className="flex items-center space-x-3">
-                  <label className="flex items-center space-x-2 cursor-pointer">
+                  <label 
+                    className="flex items-center space-x-2 cursor-pointer select-none"
+                    onClick={(e) => {
+                      e.preventDefault()
+                      onToggleSlimRules()
+                    }}
+                  >
                     <span className="text-sm text-gray-600">精简版</span>
-                    <div className="relative">
+                    <div className="relative w-11 h-6">
                       <input
                         type="checkbox"
                         checked={settingsStore.useSlimRules}
-                        onChange={onToggleSlimRules}
-                        className="sr-only peer"
+                        className="sr-only"
+                        readOnly
+                        tabIndex={-1}
                       />
-                      <div className="w-11 h-6 bg-gray-300 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                      <div className={`w-11 h-6 rounded-full transition-all duration-200 ${
+                        settingsStore.useSlimRules ? 'bg-blue-600' : 'bg-gray-300'
+                      }`}>
+                        <div className={`absolute top-[2px] left-[2px] h-5 w-5 bg-white border border-gray-300 rounded-full transition-all duration-200 ${
+                          settingsStore.useSlimRules ? 'translate-x-5' : 'translate-x-0'
+                        }`}></div>
+                      </div>
                     </div>
                   </label>
                   <button
                     onClick={onResetSystem}
-                    className="text-sm text-gray-500 hover:text-gray-700 px-2 py-1 border border-gray-300 rounded"
+                    className="px-3 py-1.5 text-sm font-medium text-slate-700 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 hover:border-slate-300 transition-all focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
                   >
                     重置为默认
                   </button>
@@ -81,7 +94,9 @@ export default function PromptsTab({
               </div>
               <textarea
                 value={settingsStore.editingSystemRules}
-                onChange={(e) => (settingsStore.editingSystemRules = e.target.value)}
+                onChange={(e) => {
+                  useSettingsStore.setState({ editingSystemRules: e.target.value })
+                }}
                 placeholder="输入系统提示词规则..."
                 className="w-full h-48 px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none text-xs"
               />
@@ -96,14 +111,16 @@ export default function PromptsTab({
                 <h3 className="text-lg font-medium">用户引导规则</h3>
                 <button
                   onClick={onResetUser}
-                  className="text-sm text-gray-500 hover:text-gray-700 px-2 py-1 border border-gray-300 rounded"
+                  className="px-3 py-1.5 text-sm font-medium text-slate-700 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 hover:border-slate-300 transition-all focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
                 >
                   重置为默认
                 </button>
               </div>
               <textarea
                 value={settingsStore.editingUserRules}
-                onChange={(e) => (settingsStore.editingUserRules = e.target.value)}
+                onChange={(e) => {
+                  useSettingsStore.setState({ editingUserRules: e.target.value })
+                }}
                 placeholder="输入用户引导规则..."
                 className="w-full h-48 px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none text-xs"
               />
@@ -118,14 +135,16 @@ export default function PromptsTab({
                 <h3 className="text-lg font-medium">需求报告规则</h3>
                 <button
                   onClick={onResetRequirement}
-                  className="text-sm text-gray-500 hover:text-gray-700 px-2 py-1 border border-gray-300 rounded"
+                  className="px-3 py-1.5 text-sm font-medium text-slate-700 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 hover:border-slate-300 transition-all focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
                 >
                   重置为默认
                 </button>
               </div>
               <textarea
                 value={settingsStore.editingRequirementReportRules}
-                onChange={(e) => (settingsStore.editingRequirementReportRules = e.target.value)}
+                onChange={(e) => {
+                  useSettingsStore.setState({ editingRequirementReportRules: e.target.value })
+                }}
                 placeholder="输入需求报告生成规则..."
                 className="w-full h-48 px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none text-xs"
               />
@@ -145,17 +164,21 @@ export default function PromptsTab({
                     <h4 className="text-sm font-medium text-gray-700">关键指令提取</h4>
                     <button
                       onClick={onResetThinking}
-                      className="text-xs text-gray-400 hover:text-gray-600 px-1 py-0.5 border border-gray-200 rounded"
+                      className="px-2.5 py-1 text-xs font-medium text-slate-700 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 hover:border-slate-300 transition-all focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-1"
                     >
                       重置为默认
                     </button>
                   </div>
                   <textarea
                     value={settingsStore.editingFinalPromptRules.THINKING_POINTS_EXTRACTION}
-                    onChange={(e) =>
-                      (settingsStore.editingFinalPromptRules.THINKING_POINTS_EXTRACTION =
-                        e.target.value)
-                    }
+                    onChange={(e) => {
+                      useSettingsStore.setState({
+                        editingFinalPromptRules: {
+                          ...settingsStore.editingFinalPromptRules,
+                          THINKING_POINTS_EXTRACTION: e.target.value
+                        }
+                      })
+                    }}
                     placeholder="输入关键指令提取规则..."
                     className="w-full h-32 px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none text-xs"
                   />
@@ -166,17 +189,21 @@ export default function PromptsTab({
                     <h4 className="text-sm font-medium text-gray-700">系统提示词生成</h4>
                     <button
                       onClick={onResetGeneration}
-                      className="text-xs text-gray-400 hover:text-gray-600 px-1 py-0.5 border border-gray-200 rounded"
+                      className="px-2.5 py-1 text-xs font-medium text-slate-700 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 hover:border-slate-300 transition-all focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-1"
                     >
                       重置为默认
                     </button>
                   </div>
                   <textarea
                     value={settingsStore.editingFinalPromptRules.SYSTEM_PROMPT_GENERATION}
-                    onChange={(e) =>
-                      (settingsStore.editingFinalPromptRules.SYSTEM_PROMPT_GENERATION =
-                        e.target.value)
-                    }
+                    onChange={(e) => {
+                      useSettingsStore.setState({
+                        editingFinalPromptRules: {
+                          ...settingsStore.editingFinalPromptRules,
+                          SYSTEM_PROMPT_GENERATION: e.target.value
+                        }
+                      })
+                    }}
                     placeholder="输入系统提示词生成规则..."
                     className="w-full h-32 px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none text-xs"
                   />
@@ -187,17 +214,21 @@ export default function PromptsTab({
                     <h4 className="text-sm font-medium text-gray-700">优化建议生成</h4>
                     <button
                       onClick={onResetAdvice}
-                      className="text-xs text-gray-400 hover:text-gray-600 px-1 py-0.5 border border-gray-200 rounded"
+                      className="px-2.5 py-1 text-xs font-medium text-slate-700 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 hover:border-slate-300 transition-all focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-1"
                     >
                       重置为默认
                     </button>
                   </div>
                   <textarea
                     value={settingsStore.editingFinalPromptRules.OPTIMIZATION_ADVICE_GENERATION}
-                    onChange={(e) =>
-                      (settingsStore.editingFinalPromptRules.OPTIMIZATION_ADVICE_GENERATION =
-                        e.target.value)
-                    }
+                    onChange={(e) => {
+                      useSettingsStore.setState({
+                        editingFinalPromptRules: {
+                          ...settingsStore.editingFinalPromptRules,
+                          OPTIMIZATION_ADVICE_GENERATION: e.target.value
+                        }
+                      })
+                    }}
                     placeholder="输入优化建议生成规则..."
                     className="w-full h-32 px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none text-xs"
                   />
@@ -208,17 +239,21 @@ export default function PromptsTab({
                     <h4 className="text-sm font-medium text-gray-700">优化应用</h4>
                     <button
                       onClick={onResetApplication}
-                      className="text-xs text-gray-400 hover:text-gray-600 px-1 py-0.5 border border-gray-200 rounded"
+                      className="px-2.5 py-1 text-xs font-medium text-slate-700 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 hover:border-slate-300 transition-all focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-1"
                     >
                       重置为默认
                     </button>
                   </div>
                   <textarea
                     value={settingsStore.editingFinalPromptRules.OPTIMIZATION_APPLICATION}
-                    onChange={(e) =>
-                      (settingsStore.editingFinalPromptRules.OPTIMIZATION_APPLICATION =
-                        e.target.value)
-                    }
+                    onChange={(e) => {
+                      useSettingsStore.setState({
+                        editingFinalPromptRules: {
+                          ...settingsStore.editingFinalPromptRules,
+                          OPTIMIZATION_APPLICATION: e.target.value
+                        }
+                      })
+                    }}
                     placeholder="输入优化应用规则..."
                     className="w-full h-32 px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none text-xs"
                   />
@@ -269,16 +304,21 @@ export default function PromptsTab({
                     </h4>
                     <button
                       onClick={onResetQualityAnalysisSystem}
-                      className="text-xs text-gray-400 hover:text-gray-600 px-1 py-0.5 border border-gray-200 rounded"
+                      className="px-2.5 py-1 text-xs font-medium text-slate-700 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 hover:border-slate-300 transition-all focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-1"
                     >
-                      重置
+                      重置为默认
                     </button>
                   </div>
                   <textarea
                     value={settingsStore.editingQualityAnalysisRules.systemPrompt}
-                    onChange={(e) =>
-                      (settingsStore.editingQualityAnalysisRules.systemPrompt = e.target.value)
-                    }
+                    onChange={(e) => {
+                      useSettingsStore.setState({
+                        editingQualityAnalysisRules: {
+                          ...settingsStore.editingQualityAnalysisRules,
+                          systemPrompt: e.target.value
+                        }
+                      })
+                    }}
                     placeholder="输入质量分析系统提示词..."
                     className="w-full h-32 px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-green-500 focus:border-transparent resize-none text-xs"
                   />
@@ -293,17 +333,21 @@ export default function PromptsTab({
                     <h4 className="text-sm font-medium text-gray-700">2. 优化建议生成</h4>
                     <button
                       onClick={onResetAdvice}
-                      className="text-xs text-gray-400 hover:text-gray-600 px-1 py-0.5 border border-gray-200 rounded"
+                      className="px-2.5 py-1 text-xs font-medium text-slate-700 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 hover:border-slate-300 transition-all focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-1"
                     >
-                      重置
+                      重置为默认
                     </button>
                   </div>
                   <textarea
                     value={settingsStore.editingFinalPromptRules.OPTIMIZATION_ADVICE_GENERATION}
-                    onChange={(e) =>
-                      (settingsStore.editingFinalPromptRules.OPTIMIZATION_ADVICE_GENERATION =
-                        e.target.value)
-                    }
+                    onChange={(e) => {
+                      useSettingsStore.setState({
+                        editingFinalPromptRules: {
+                          ...settingsStore.editingFinalPromptRules,
+                          OPTIMIZATION_ADVICE_GENERATION: e.target.value
+                        }
+                      })
+                    }}
                     placeholder="输入优化建议生成规则..."
                     className="w-full h-32 px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-green-500 focus:border-transparent resize-none text-xs"
                   />
@@ -316,17 +360,21 @@ export default function PromptsTab({
                     <h4 className="text-sm font-medium text-gray-700">3. 优化应用</h4>
                     <button
                       onClick={onResetApplication}
-                      className="text-xs text-gray-400 hover:text-gray-600 px-1 py-0.5 border border-gray-200 rounded"
+                      className="px-2.5 py-1 text-xs font-medium text-slate-700 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 hover:border-slate-300 transition-all focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-1"
                     >
-                      重置
+                      重置为默认
                     </button>
                   </div>
                   <textarea
                     value={settingsStore.editingFinalPromptRules.OPTIMIZATION_APPLICATION}
-                    onChange={(e) =>
-                      (settingsStore.editingFinalPromptRules.OPTIMIZATION_APPLICATION =
-                        e.target.value)
-                    }
+                    onChange={(e) => {
+                      useSettingsStore.setState({
+                        editingFinalPromptRules: {
+                          ...settingsStore.editingFinalPromptRules,
+                          OPTIMIZATION_APPLICATION: e.target.value
+                        }
+                      })
+                    }}
                     placeholder="输入优化应用规则..."
                     className="w-full h-32 px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-green-500 focus:border-transparent resize-none text-xs"
                   />
@@ -351,17 +399,21 @@ export default function PromptsTab({
                     </h4>
                     <button
                       onClick={onResetUserPromptQualityAnalysis}
-                      className="text-xs text-gray-400 hover:text-gray-600 px-1 py-0.5 border border-gray-200 rounded"
+                      className="px-2.5 py-1 text-xs font-medium text-slate-700 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 hover:border-slate-300 transition-all focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-1"
                     >
-                      重置
+                      重置为默认
                     </button>
                   </div>
                   <textarea
                     value={settingsStore.editingUserPromptOptimizationRules.qualityAnalysis}
-                    onChange={(e) =>
-                      (settingsStore.editingUserPromptOptimizationRules.qualityAnalysis =
-                        e.target.value)
-                    }
+                    onChange={(e) => {
+                      useSettingsStore.setState({
+                        editingUserPromptOptimizationRules: {
+                          ...settingsStore.editingUserPromptOptimizationRules,
+                          qualityAnalysis: e.target.value
+                        }
+                      })
+                    }}
                     placeholder="输入质量分析系统提示词..."
                     className="w-full h-48 px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-green-500 focus:border-transparent resize-none text-xs"
                   />
@@ -376,17 +428,21 @@ export default function PromptsTab({
                     <h4 className="text-sm font-medium text-gray-700">2. 快速优化系统提示词</h4>
                     <button
                       onClick={onResetUserPromptQuickOptimization}
-                      className="text-xs text-gray-400 hover:text-gray-600 px-1 py-0.5 border border-gray-200 rounded"
+                      className="px-2.5 py-1 text-xs font-medium text-slate-700 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 hover:border-slate-300 transition-all focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-1"
                     >
-                      重置
+                      重置为默认
                     </button>
                   </div>
                   <textarea
                     value={settingsStore.editingUserPromptOptimizationRules.quickOptimization}
-                    onChange={(e) =>
-                      (settingsStore.editingUserPromptOptimizationRules.quickOptimization =
-                        e.target.value)
-                    }
+                    onChange={(e) => {
+                      useSettingsStore.setState({
+                        editingUserPromptOptimizationRules: {
+                          ...settingsStore.editingUserPromptOptimizationRules,
+                          quickOptimization: e.target.value
+                        }
+                      })
+                    }}
                     placeholder="输入快速优化系统提示词..."
                     className="w-full h-48 px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-green-500 focus:border-transparent resize-none text-xs"
                   />

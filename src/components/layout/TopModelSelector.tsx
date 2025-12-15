@@ -135,7 +135,7 @@ export default function TopModelSelector() {
     <div className="flex items-center gap-3">
       {/* AI图标 */}
       <div className="flex-shrink-0">
-        <svg className="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <svg className="w-4 h-4 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
         </svg>
       </div>
@@ -145,7 +145,7 @@ export default function TopModelSelector() {
         <select
           value={selectedProviderKey}
           onChange={onProviderChange}
-          className="px-2 py-1 text-sm font-medium text-gray-700 bg-transparent border-b-2 border-gray-300 focus:border-blue-500 focus:outline-none cursor-pointer appearance-none pr-6"
+          className="px-2 py-1 text-sm font-medium text-slate-600 bg-transparent border-b-2 border-slate-300 focus:border-indigo-500 focus:outline-none cursor-pointer appearance-none pr-6 hover:text-slate-900 transition-colors"
         >
           <option value="" disabled>提供商</option>
           {availableProviders.map((provider) => (
@@ -155,7 +155,7 @@ export default function TopModelSelector() {
           ))}
         </select>
         {/* 简化的下拉箭头 */}
-        <svg className="absolute right-0 top-1/2 -translate-y-1/2 w-3 h-3 text-gray-400 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <svg className="absolute right-0 top-1/2 -translate-y-1/2 w-3 h-3 text-slate-400 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
         </svg>
       </div>
@@ -166,7 +166,7 @@ export default function TopModelSelector() {
           value={selectedModelKey}
           onChange={onModelChange}
           disabled={!selectedProviderId}
-          className="px-2 py-1 text-sm text-gray-600 bg-transparent border-b-2 border-gray-300 focus:border-blue-500 focus:outline-none appearance-none cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed pr-6"
+          className="px-2 py-1 text-sm font-medium text-slate-600 bg-transparent border-b-2 border-slate-300 focus:border-indigo-500 focus:outline-none appearance-none cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed pr-6 hover:text-slate-900 transition-colors"
         >
           <option value="" disabled>模型</option>
           {availableModels.map((model) => (
@@ -176,7 +176,7 @@ export default function TopModelSelector() {
           ))}
         </select>
         {/* 简化的下拉箭头 */}
-        <svg className="absolute right-0 top-1/2 -translate-y-1/2 w-3 h-3 text-gray-400 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <svg className="absolute right-0 top-1/2 -translate-y-1/2 w-3 h-3 text-slate-400 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
         </svg>
       </div>
