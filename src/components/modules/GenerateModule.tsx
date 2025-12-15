@@ -31,11 +31,11 @@ export default function GenerateModule() {
   }, [isInitialized]) // 只依赖 isInitialized
 
   return (
-    <div className="w-full h-full flex flex-col overflow-hidden p-2">
+    <div className="w-full flex-1 flex flex-col overflow-hidden p-2 min-h-0">
       {/* 设置按钮 */}
       <GenerateSettingsModal />
 
-      <div className="w-full h-full flex flex-col overflow-hidden">
+      <div className="w-full flex-1 flex flex-col overflow-hidden min-h-0">
         {/* 模块特定顶栏 */}
         <div className="bg-white rounded-lg shadow-sm p-4 mb-4 flex-shrink-0">
           <div className="flex items-center justify-between">
